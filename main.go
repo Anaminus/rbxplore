@@ -9,8 +9,6 @@ import (
 	"github.com/google/gxui/themes/dark"
 )
 
-var tooltips *gxui.ToolTipController
-
 func appMain(driver gxui.Driver) {
 	GenerateIconTextures(driver)
 
