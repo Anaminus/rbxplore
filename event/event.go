@@ -16,10 +16,6 @@ func (c *Connection) Disconnect() {
 	}
 }
 
-func (c *Connection) Connected() bool {
-	return c.event != nil
-}
-
 type listener struct {
 	id int
 	fn func(...interface{})
