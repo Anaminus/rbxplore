@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"sort"
 
 	"github.com/google/gxui"
@@ -227,7 +228,8 @@ func (c *EditorContext) ChangeSession(s *Session) bool {
 
 	if s.File != "" {
 		if err := c.session.DecodeFile(); err != nil {
-			fmt.Println("ERROR", err)
+			log.Printf("failed to decode session file: %s\n", err)
+			return false
 		}
 	}
 
@@ -367,6 +369,8 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 	layout.SetDirection(gxui.TopToBottom)
 	layout.AddChild(menu)
 	layout.AddChild(splitter)
+
+	c.ChangeSession(s.session)
 
 	return []gxui.Control{
 		layout,

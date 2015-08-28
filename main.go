@@ -100,8 +100,9 @@ func guiMain(driver gxui.Driver) {
 	theme := dark.CreateTheme(driver)
 	window := theme.CreateWindow(800, 600, "rbxplore")
 
-	editor := &EditorContext{
-		session: &Session{},
+	editor := &EditorContext{}
+	if Option.New {
+		editor.session = new(Session)
 	}
 	CreateContextController(driver, window, theme, editor)
 
