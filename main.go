@@ -59,7 +59,7 @@ func shellMain() {
 		})
 		err := Data.Update()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, err)
 		}
 		conn.Disconnect()
 	}
