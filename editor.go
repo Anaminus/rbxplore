@@ -245,11 +245,11 @@ type EditorContext struct {
 }
 
 // If File is defined, determines Format, and decodes the file into Root.
-func (c *EditorContext) DecodeFile() error {
-	if c.session == nil {
+func (s *Session) DecodeFile() error {
+	if s == nil {
 		return errors.New("no open session")
 	}
-	f, err := os.Open(c.session.File)
+	f, err := os.Open(s.File)
 	if err != nil {
 		return err
 	}
@@ -260,14 +260,14 @@ func (c *EditorContext) DecodeFile() error {
 	// Guess format from file extension.
 	switch filepath.Ext(f.Name()) {
 	case ".rbxlx":
-		c.session.Format = FormatRBXLX
+		s.Format = FormatRBXLX
 		decode = xml.Deserialize
 	case ".rbxmx":
-		c.session.Format = FormatRBXMX
+		s.Format = FormatRBXMX
 		decode = xml.Deserialize
 	case ".json":
 		d := json.NewDecoder(f)
-		if err := d.Decode(c.session.Root); err != nil {
+		if err := d.Decode(s.Root); err != nil {
 			return err
 		}
 		return nil
@@ -280,40 +280,40 @@ func (c *EditorContext) DecodeFile() error {
 		f.Seek(0, os.SEEK_SET)
 		switch format.Name() {
 		case "rbxl":
-			c.session.Format = FormatRBXL
+			s.Format = FormatRBXL
 		case "rbxm":
-			c.session.Format = FormatRBXM
+			s.Format = FormatRBXM
 		case "rbxlx":
-			c.session.Format = FormatRBXLX
+			s.Format = FormatRBXLX
 		case "rbxmx":
-			c.session.Format = FormatRBXMX
+			s.Format = FormatRBXMX
 		}
 		decode = format.Decode
 	}
 
-	c.session.Root, err = decode(f, API)
+	s.Root, err = decode(f, API)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *EditorContext) EncodeFile() error {
-	if c.session.File == "" {
+func (s *Session) EncodeFile() error {
+	if s.File == "" {
 		return errors.New("no file")
 	}
-	if c.session.Format == FormatNone {
+	if s.Format == FormatNone {
 		return errors.New("no format")
 	}
 
-	f, err := os.Create(c.session.File)
+	f, err := os.Create(s.File)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
 	var encode func(io.Writer, *rbxdump.API, *rbxfile.Root) error
-	switch c.session.Format {
+	switch s.Format {
 	case FormatRBXL:
 		encode = bin.SerializePlace
 	case FormatRBXM:
@@ -324,7 +324,7 @@ func (c *EditorContext) EncodeFile() error {
 		encode = xml.Serialize
 	case FormatJSON:
 		e := json.NewEncoder(f)
-		if err := e.Encode(c.session.Root); err != nil {
+		if err := e.Encode(s.Root); err != nil {
 			return err
 		}
 		return nil
@@ -332,7 +332,7 @@ func (c *EditorContext) EncodeFile() error {
 		return errors.New("bad format")
 	}
 
-	err = encode(f, API, c.session.Root)
+	err = encode(f, API, s.Root)
 	if err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func (c *EditorContext) ChangeSession(s *Session) bool {
 	}
 
 	if s.File != "" {
-		if err := c.DecodeFile(); err != nil {
+		if err := c.session.DecodeFile(); err != nil {
 			fmt.Println("ERROR", err)
 		}
 	}
