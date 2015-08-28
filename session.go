@@ -25,9 +25,10 @@ const (
 )
 
 type Session struct {
-	File   string
-	Format Format
-	Root   *rbxfile.Root
+	File     string
+	Format   Format
+	Minified bool
+	Root     *rbxfile.Root
 }
 
 // If File is defined, determines Format, and decodes the file into Root.
