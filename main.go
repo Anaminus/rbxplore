@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/anaminus/rbxplore/settings"
+	"io"
+	"os"
 
 	"github.com/google/gxui"
 	"github.com/google/gxui/drivers/gl"
@@ -36,6 +38,33 @@ var Option struct {
 }
 
 func shellMain() {
+	if Option.UpdateData {
+		conn := Data.OnUpdateProgress(func(v ...interface{}) {
+			name := v[0].(string)
+			progress := v[1].(int64)
+			total := v[2].(int64)
+			err, _ := v[3].(error)
+			if err == io.EOF {
+				fmt.Printf("\rDownload of %s completed\n", name)
+			} else if err != nil {
+				fmt.Printf("\r")
+			} else {
+				if total < 0 {
+					fmt.Printf("\rDownloading %s...", name)
+
+				} else {
+					fmt.Printf("\rDownloading %s (%3.2f%%)...", name, float64(progress)/float64(total)*100)
+				}
+			}
+		})
+		err := Data.Update()
+		if err != nil {
+			fmt.Println(err)
+		}
+		conn.Disconnect()
+	}
+
+	Data.Reload()
 }
 
 func guiMain(driver gxui.Driver) {
