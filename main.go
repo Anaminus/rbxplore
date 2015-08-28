@@ -6,6 +6,7 @@ import (
 	"github.com/anaminus/rbxplore/settings"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/google/gxui"
 	"github.com/google/gxui/drivers/gl"
@@ -65,6 +66,30 @@ func shellMain() {
 	}
 
 	Data.Reload()
+
+	session := new(Session)
+	if Option.InputFile != "" {
+		session.File = Option.InputFile
+		if err := session.DecodeFile(); err != nil {
+			fmt.Fprintf(os.Stderr, "could not decode input file: ", err)
+			return
+		}
+	}
+
+	if Option.OutputFormat != "" {
+		session.Minified = strings.HasSuffix(Option.OutputFormat, "_min")
+		session.Format = FormatFromString(strings.TrimSuffix(Option.OutputFormat, "_min"))
+	}
+
+	if Option.OutputFile != "" {
+		// TODO: Unless format flag is specified, guess format from output
+		// extension, falling back to input format if necessary.
+		session.File = Option.OutputFile
+		if err := session.EncodeFile(); err != nil {
+			fmt.Fprintf(os.Stderr, "could not encode output file: ", err)
+			return
+		}
+	}
 }
 
 func guiMain(driver gxui.Driver) {
