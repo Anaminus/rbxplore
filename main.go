@@ -45,21 +45,21 @@ func shellMain() {
 			total := v[2].(int64)
 			err, _ := v[3].(error)
 			if err == io.EOF {
-				fmt.Printf("\rDownload of %s completed\n", name)
+				fmt.Fprintf(os.Stderr, "\rDownload of %s completed\n", name)
 			} else if err != nil {
-				fmt.Printf("\r")
+				fmt.Fprintf(os.Stderr, "\r")
 			} else {
 				if total < 0 {
-					fmt.Printf("\rDownloading %s...", name)
+					fmt.Fprintf(os.Stderr, "\rDownloading %s...", name)
 
 				} else {
-					fmt.Printf("\rDownloading %s (%3.2f%%)...", name, float64(progress)/float64(total)*100)
+					fmt.Fprintf(os.Stderr, "\rDownloading %s (%3.2f%%)...", name, float64(progress)/float64(total)*100)
 				}
 			}
 		})
 		err := Data.Update()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, err)
 		}
 		conn.Disconnect()
 	}
