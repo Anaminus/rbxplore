@@ -24,6 +24,22 @@ const (
 	FormatJSON
 )
 
+func FormatFromString(s string) Format {
+	switch s {
+	case "rbxl":
+		return FormatRBXL
+	case "rbxm":
+		return FormatRBXM
+	case "rbxlx":
+		return FormatRBXLX
+	case "rbxmx":
+		return FormatRBXMX
+	case "json":
+		return FormatJSON
+	}
+	return FormatNone
+}
+
 type Session struct {
 	File     string
 	Format   Format
