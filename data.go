@@ -24,6 +24,9 @@ const RMDUpdateURL = "https://anaminus.github.io/rbx/raw/rmd/latest.xml"
 const APIFileName = "api.txt"
 const APIUpdateURL = "https://anaminus.github.io/rbx/raw/api/latest.txt"
 
+const IconFileName = "icon-explorer.png"
+const IconUpdateURL = "http://anaminus.github.io/api/img/icon-explorer.png"
+
 type dataStruct struct {
 	RMD *rbxfile.Root
 	API *rbxdump.API
@@ -79,6 +82,9 @@ func (d *dataStruct) Update() error {
 		return err
 	}
 	if err := d.updateItem("API dump", "api_file", APIFileName, "api_update_url", APIUpdateURL); err != nil {
+		return err
+	}
+	if err := d.updateItem("Icons", "icon_file", IconFileName, "icon_update_url", IconUpdateURL); err != nil {
 		return err
 	}
 	return nil

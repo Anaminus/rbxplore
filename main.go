@@ -20,10 +20,12 @@ var Settings settings.Settings
 
 func InitSettings() {
 	Settings = settings.Create(SettingsFileName, map[string]interface{}{
-		"rmd_file":       "",
-		"api_file":       "",
-		"rmd_update_url": RMDUpdateURL,
-		"api_update_url": APIUpdateURL,
+		"rmd_file":        "",
+		"api_file":        "",
+		"icon_file":       "",
+		"rmd_update_url":  RMDUpdateURL,
+		"api_update_url":  APIUpdateURL,
+		"icon_update_url": IconUpdateURL,
 	})
 }
 
