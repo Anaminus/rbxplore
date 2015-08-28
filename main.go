@@ -90,7 +90,7 @@ func main() {
 	flag.BoolVar(&Option.UpdateData, "updatedata", false, "Update ReflectionMetadata and API dump files.")
 	flag.BoolVar(&Option.Shell, "shell", false, "Runs the program without a GUI.")
 	flag.StringVar(&Option.OutputFile, "output", "", "If --shell is true, export the input file to the given location. The format will be detected from the extension.")
-	flag.StringVar(&Option.OutputFormat, "format", "", "If --shell is true, export the input file with the given format. This overrides the output file extension. Valid formats are 'rbxl', 'rbxm', 'rbxlx', 'rbxmx', and 'json'. '_min' may be appended to output in a minimized format, if applicable.")
+	flag.StringVar(&Option.OutputFormat, "format", "", "If --shell is true, export the input file with the given format. This overrides the output file extension. Valid formats are 'rbxl', 'rbxm', 'rbxlx', 'rbxmx', and 'json'. '_min' may be appended to output in a minified format, if applicable.")
 	flag.BoolVar(&Option.New, "new", true, "If running with a GUI, force a new session to be opened.")
 	flag.Parse()
 	Option.InputFile = flag.Arg(0)
