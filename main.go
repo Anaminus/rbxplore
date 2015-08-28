@@ -3,12 +3,26 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/anaminus/rbxplore/settings"
 
 	"github.com/google/gxui"
 	"github.com/google/gxui/drivers/gl"
 	"github.com/google/gxui/math"
 	"github.com/google/gxui/themes/dark"
 )
+
+const SettingsFileName = "rbxplore-settings.json"
+
+var Settings settings.Settings
+
+func InitSettings() {
+	Settings = settings.Create(SettingsFileName, map[string]interface{}{
+		"rmd_file":       "",
+		"api_file":       "",
+		"rmd_update_url": RMDUpdateURL,
+		"api_update_url": APIUpdateURL,
+	})
+}
 
 var Option struct {
 	Debug        bool
