@@ -263,7 +263,7 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 		return button
 	}
 
-	actionNew := actionButton("New", func(e gxui.MouseEvent) {
+	actionButton("New", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
@@ -273,7 +273,7 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 		}
 		fmt.Println("spawn process with --new param")
 	})
-	actionOpen := actionButton("Open", func(e gxui.MouseEvent) {
+	actionButton("Open", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
@@ -288,13 +288,13 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 		}
 		fmt.Println("spawn process with --open param")
 	})
-	actionSettings := actionButton("Settings", func(e gxui.MouseEvent) {
+	actionButton("Settings", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
 		fmt.Println("enter Settings context")
 	})
-	fmt.Println("ACTION", actionNew, actionOpen, actionSettings)
+
 	actionSave := actionButton("Save", func(e gxui.MouseEvent) {
 		if c.session == nil {
 			return
