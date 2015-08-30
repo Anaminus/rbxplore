@@ -146,6 +146,10 @@ func getFileNearExec(file, alt string) (string, error) {
 	return filepath.Join(exec, alt), nil
 }
 
+func (d *dataStruct) CancelUpdate() error {
+	return d.dl.Close()
+}
+
 var Data *dataStruct
 
 func InitData() {
