@@ -126,6 +126,7 @@ func main() {
 	InitSettings()
 	Settings.SetFile(Option.SettingsFile)
 	Settings.Load()
+	Settings.Save()
 
 	InitData()
 
