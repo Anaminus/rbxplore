@@ -17,7 +17,8 @@ var IconTextures map[string]gxui.Texture
 func GenerateIconTextures(driver gxui.Driver) {
 	const size = 16
 
-	f, err := os.Open("icon-explorer.png")
+	file, _ := getFileNearExec(Settings.Get("icon_file").(string), IconFileName)
+	f, err := os.Open(file)
 	if err != nil {
 		fmt.Println("failed to open icons:", err)
 		return
