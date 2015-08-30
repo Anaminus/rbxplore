@@ -14,7 +14,7 @@ type Context interface {
 type contextItem struct {
 	context  Context
 	controls []gxui.Control
-	dialog   *Absorber
+	dialog   gxui.Control
 }
 
 type ContextController struct {

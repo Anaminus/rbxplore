@@ -13,20 +13,19 @@ type Absorber struct {
 	gxui.Control
 }
 
-func CreateAbsorber(theme gxui.Theme, c gxui.Color, children ...gxui.Control) *Absorber {
+func CreateAbsorber(theme gxui.Theme, c gxui.Color, children ...gxui.Control) gxui.Control {
 	v := theme.CreateLinearLayout()
 	v.SetBackgroundBrush(gxui.Brush{Color: c})
 	v.SetSizeMode(gxui.Fill)
 	v.SetDirection(gxui.TopToBottom)
 	v.SetHorizontalAlignment(gxui.AlignCenter)
+	v.SetVerticalAlignment(gxui.AlignMiddle)
 
 	for _, child := range children {
 		v.AddChild(child)
 	}
 
-	return &Absorber{
-		Control: v,
-	}
+	return v //&Absorber{Control: v}
 }
 
 func (a Absorber) Color(c gxui.Color) {
