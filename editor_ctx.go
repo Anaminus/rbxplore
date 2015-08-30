@@ -370,7 +370,7 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 	layout.AddChild(menu)
 	layout.AddChild(splitter)
 
-	c.ChangeSession(s.session)
+	c.ChangeSession(c.session)
 
 	return []gxui.Control{
 		layout,
