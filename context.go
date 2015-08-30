@@ -93,6 +93,8 @@ func (c *ContextController) ExitContext() bool {
 		c.applyContext()
 	}
 
+	ctxi.context.Exiting()
+
 	return true
 }
 
