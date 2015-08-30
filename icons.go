@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
+	"log"
 	"os"
 	"strconv"
 
@@ -27,24 +27,24 @@ func GenerateIconTextures(driver gxui.Driver) {
 	file, _ := getFileNearExec(Settings.Get("icon_file").(string), IconFileName)
 	f, err := os.Open(file)
 	if err != nil {
-		fmt.Println("failed to open icons:", err)
+		log.Println("failed to open icons:", err)
 		return
 	}
 	source, err := png.Decode(f)
 	if err != nil {
-		fmt.Println("failed to decode icons:", err)
+		log.Println("failed to decode icons:", err)
 		f.Close()
 		return
 	}
 
 	f, err = os.Open("ReflectionMetadata.xml")
 	if err != nil {
-		fmt.Println("failed to open RMD:", err)
+		log.Println("failed to open RMD:", err)
 		return
 	}
 	rmd, err := rbxfile.Decode(f)
 	if err != nil {
-		fmt.Println("failed to decode RMD:", err)
+		log.Println("failed to decode RMD:", err)
 		f.Close()
 		return
 	}
