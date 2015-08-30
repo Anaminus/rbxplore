@@ -117,6 +117,5 @@ func (dl *Download) Close() error {
 	dl.lastUpdate = time.Now()
 	dl.onProgress.Fire(dl.Name, dl.progress, dl.total, ErrClosed)
 	err := dl.reader.Close()
-	dl.reader = nil
 	return err
 }
