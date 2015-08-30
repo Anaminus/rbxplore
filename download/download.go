@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/anaminus/rbxplore/event"
@@ -35,6 +36,7 @@ type Download struct {
 	lastUpdate time.Time
 	progress   int64
 	total      int64
+	mutex      sync.Mutex
 }
 
 // OnProgress is an event that is fired when progress has been made on the
@@ -62,6 +64,9 @@ func (dl *Download) OnProgress(listener func(...interface{})) *event.Connection 
 // it will be returned as an ErrStatus. When all of the data has been read,
 // the downloader is automatically closed, and may then be reused.
 func (dl *Download) Read(p []byte) (int, error) {
+	dl.mutex.Lock()
+	defer dl.mutex.Unlock()
+
 	if dl.reader == nil {
 		resp, err := http.Get(dl.URL)
 		dl.progress = 0
@@ -103,6 +108,9 @@ func (dl *Download) Read(p []byte) (int, error) {
 // Close can be used to stop the download before it is finished. The download
 // may then be reused.
 func (dl *Download) Close() error {
+	dl.mutex.Lock()
+	defer dl.mutex.Unlock()
+
 	if dl.reader == nil {
 		return ErrClosed
 	}
