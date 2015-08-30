@@ -95,16 +95,36 @@ func shellMain() {
 }
 
 func guiMain(driver gxui.Driver) {
-	GenerateIconTextures(driver)
-
 	theme := dark.CreateTheme(driver)
 	window := theme.CreateWindow(800, 600, "rbxplore")
 
 	editor := &EditorContext{}
-	if Option.New {
-		editor.session = new(Session)
+	ctxc, _ := CreateContextController(driver, window, theme, editor)
+
+	startSession := make(chan bool, 1)
+	go func() {
+		<-startSession
+		driver.Call(func() {
+			GenerateIconTextures(driver)
+			if Option.InputFile != "" {
+				editor.ChangeSession(&Session{
+					File: Option.InputFile,
+				})
+			} else if Option.New {
+				editor.ChangeSession(new(Session))
+			}
+		})
+	}()
+
+	if Option.UpdateData {
+		update := new(UpdateDialogContext)
+		update.UpdateFinished = func() {
+			startSession <- true
+		}
+		ctxc.EnterContext(update)
+	} else {
+		startSession <- true
 	}
-	CreateContextController(driver, window, theme, editor)
 
 	window.OnClose(driver.Terminate)
 	window.SetPadding(math.Spacing{L: 10, T: 10, R: 10, B: 10})
