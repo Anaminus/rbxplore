@@ -162,11 +162,18 @@ func (s *settingsMap) save() (ok bool) {
 		return false
 	}
 	defer f.Close()
-	je := json.NewEncoder(f)
-	if err := je.Encode(&s.values); err != nil {
+
+	b, err := json.MarshalIndent(&s.values, "", "\t")
+	if err != nil {
+		log.Printf("error encoding settings file `%s`: %s\n", s.currentFile, err)
+		return false
+	}
+
+	if _, err := f.Write(b); err != nil {
 		log.Printf("error writing settings file `%s`: %s\n", s.currentFile, err)
 		return false
 	}
+
 	return true
 }
 
