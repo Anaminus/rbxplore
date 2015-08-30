@@ -17,6 +17,13 @@ var IconTextures map[string]gxui.Texture
 func GenerateIconTextures(driver gxui.Driver) {
 	const size = 16
 
+	var err error
+	defer func() {
+		if err != nil {
+			IconTextures = nil
+		}
+	}()
+
 	file, _ := getFileNearExec(Settings.Get("icon_file").(string), IconFileName)
 	f, err := os.Open(file)
 	if err != nil {
