@@ -271,13 +271,13 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 			c.ChangeSession(&Session{})
 			return
 		}
-		fmt.Println("spawn process with --new param")
+		fmt.Println("TODO: spawn process with --new param")
 	})
 	actionButton("Open", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
-		fmt.Println("enter Select context")
+		fmt.Println("TODO: enter Select context")
 		session := &Session{
 			File:   "",
 			Format: FormatNone,
@@ -286,13 +286,13 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 			c.ChangeSession(session)
 			return
 		}
-		fmt.Println("spawn process with --open param")
+		fmt.Println("TODO: spawn process with selected file")
 	})
 	actionButton("Settings", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
-		fmt.Println("enter Settings context")
+		fmt.Println("TODO: enter Settings context")
 	})
 
 	actionSave := actionButton("Save", func(e gxui.MouseEvent) {
@@ -302,7 +302,7 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
-		fmt.Println("write content to file")
+		fmt.Println("TODO: write session to file")
 	})
 	actionSaveAs := actionButton("Save As", func(e gxui.MouseEvent) {
 		if c.session == nil {
@@ -311,9 +311,9 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
-		fmt.Println("enter Export context")
-		fmt.Println("switch session data to selection")
-		fmt.Println("write content to selection")
+		fmt.Println("TODO: enter Export context")
+		fmt.Println("TODO: change session output to selected file")
+		fmt.Println("TODO: write session to selected file")
 	})
 	actionClose := actionButton("Close", func(e gxui.MouseEvent) {
 		if c.session == nil {
