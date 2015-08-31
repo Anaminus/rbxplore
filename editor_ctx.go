@@ -214,7 +214,6 @@ func (p propsAdapter) Size(gxui.Theme) math.Size {
 }
 
 type EditorContext struct {
-	ctxc            *ContextController
 	session         *Session
 	onChangeSession gxui.Event
 	changeListener  gxui.EventSubscription
@@ -245,9 +244,11 @@ func (c *EditorContext) OnChangeSession(f func()) gxui.EventSubscription {
 	return c.onChangeSession.Listen(f)
 }
 
-func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme gxui.Theme) ([]gxui.Control, bool) {
+func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) {
+	theme := ctxc.Theme()
+
 	bubble := theme.CreateBubbleOverlay()
-	tooltips := gxui.CreateToolTipController(bubble, driver)
+	tooltips := gxui.CreateToolTipController(bubble, ctxc.Driver())
 
 	//// Menu
 	menu := theme.CreateLinearLayout()
@@ -378,7 +379,7 @@ func (c *EditorContext) Entering(driver gxui.Driver, window gxui.Window, theme g
 	}, true
 }
 
-func (c *EditorContext) Exiting() {
+func (c *EditorContext) Exiting(*ContextController) {
 	if c.changeListener != nil {
 		c.changeListener.Unlisten()
 		c.changeListener = nil
@@ -387,8 +388,4 @@ func (c *EditorContext) Exiting() {
 
 func (c *EditorContext) IsDialog() bool {
 	return false
-}
-
-func (c *EditorContext) SetController(ctxc *ContextController) {
-	c.ctxc = ctxc
 }

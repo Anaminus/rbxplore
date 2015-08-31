@@ -14,7 +14,10 @@ type UpdateDialogContext struct {
 	UpdateFinished func()
 }
 
-func (c *UpdateDialogContext) Entering(driver gxui.Driver, window gxui.Window, theme gxui.Theme) ([]gxui.Control, bool) {
+func (c *UpdateDialogContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) {
+	driver := ctxc.Driver()
+	theme := ctxc.Theme()
+
 	c.dialog = CreateDialog(theme)
 	c.dialog.SetTitle("Updating Data...")
 
@@ -57,7 +60,7 @@ func (c *UpdateDialogContext) Entering(driver gxui.Driver, window gxui.Window, t
 		label.SetText("Update canceled.")
 		c.dialog.RemoveAction(actionCancel)
 		c.dialog.AddAction("Close", true, func() {
-			c.ctxc.ExitContext()
+			ctxc.ExitContext()
 		})
 	})
 
@@ -77,14 +80,14 @@ func (c *UpdateDialogContext) Entering(driver gxui.Driver, window gxui.Window, t
 			}
 			c.dialog.RemoveAction(actionCancel)
 			c.dialog.AddAction("Close", true, func() {
-				c.ctxc.ExitContext()
+				ctxc.ExitContext()
 			})
 		})
 	}()
 	return []gxui.Control{c.dialog.Control()}, true
 }
 
-func (c *UpdateDialogContext) Exiting() {
+func (c *UpdateDialogContext) Exiting(*ContextController) {
 	if c.UpdateFinished != nil {
 		c.UpdateFinished()
 	}
@@ -92,8 +95,4 @@ func (c *UpdateDialogContext) Exiting() {
 
 func (c *UpdateDialogContext) IsDialog() bool {
 	return true
-}
-
-func (c *UpdateDialogContext) SetController(ctxc *ContextController) {
-	c.ctxc = ctxc
 }

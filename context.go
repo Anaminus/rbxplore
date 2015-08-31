@@ -5,10 +5,9 @@ import (
 )
 
 type Context interface {
-	Entering(gxui.Driver, gxui.Window, gxui.Theme) ([]gxui.Control, bool)
-	Exiting()
+	Entering(*ContextController) ([]gxui.Control, bool)
+	Exiting(*ContextController)
 	IsDialog() bool
-	SetController(*ContextController)
 }
 
 type contextItem struct {
@@ -25,7 +24,7 @@ type ContextController struct {
 }
 
 func (c *ContextController) createContextItem(ctx Context) bool {
-	controls, ok := ctx.Entering(c.driver, c.window, c.theme)
+	controls, ok := ctx.Entering(c)
 	if !ok {
 		return false
 	}
@@ -36,7 +35,6 @@ func (c *ContextController) createContextItem(ctx Context) bool {
 	if ctx.IsDialog() {
 		ctxi.dialog = CreateAbsorber(c.theme, gxui.Color{0, 0, 0, 0.5}, ctxi.controls...)
 	}
-	ctx.SetController(c)
 	c.stack = append(c.stack, ctxi)
 	return true
 }
@@ -83,7 +81,6 @@ func (c *ContextController) ExitContext() bool {
 		return false
 	}
 	ctxi := c.stack[len(c.stack)-1]
-	ctxi.context.SetController(nil)
 	c.stack[len(c.stack)-1] = contextItem{}
 	c.stack = c.stack[:len(c.stack)-1]
 
@@ -93,9 +90,21 @@ func (c *ContextController) ExitContext() bool {
 		c.applyContext()
 	}
 
-	ctxi.context.Exiting()
+	ctxi.context.Exiting(c)
 
 	return true
+}
+
+func (c *ContextController) Driver() gxui.Driver {
+	return c.driver
+}
+
+func (c *ContextController) Window() gxui.Window {
+	return c.window
+}
+
+func (c *ContextController) Theme() gxui.Theme {
+	return c.theme
 }
 
 func CreateContextController(driver gxui.Driver, window gxui.Window, theme gxui.Theme, ctx Context) (*ContextController, bool) {
