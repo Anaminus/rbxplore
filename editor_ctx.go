@@ -320,6 +320,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 
 	//// Editor
 	rbxfiletree := theme.CreateTree()
+	propsAdapter := &propsAdapter{}
 	rbxfiletree.SetAdapter(&rootAdapter{
 		tooltips: tooltips,
 	})
@@ -331,6 +332,8 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		actionSaveAs.SetVisible(c.session != nil)
 		actionClose.SetVisible(c.session != nil)
 
+		propsAdapter.updateProps(nil)
+
 		var root *rbxfile.Root
 		if c.session != nil {
 			root = c.session.Root
@@ -341,7 +344,6 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		})
 	})
 
-	propsAdapter := &propsAdapter{}
 	propsList := theme.CreateList()
 	propsList.SetAdapter(propsAdapter)
 
