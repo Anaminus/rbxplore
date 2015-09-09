@@ -264,7 +264,9 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 			c.ChangeSession(&Session{})
 			return
 		}
-		fmt.Println("TODO: spawn process with --new param")
+		if err := SpawnProcess("--new"); err != nil {
+			log.Printf("failed to spawn process: %s\n", err)
+		}
 	})
 	actionButton("Open", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
