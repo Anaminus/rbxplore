@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/google/gxui"
+	"github.com/anaminus/gxui"
 )
 
 type emptySub struct{}

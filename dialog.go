@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/google/gxui"
-	"github.com/google/gxui/math"
+	"github.com/anaminus/gxui"
+	"github.com/anaminus/gxui/math"
 )
 
 type Dialog interface {

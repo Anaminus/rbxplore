@@ -8,10 +8,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/gxui"
-	"github.com/google/gxui/drivers/gl"
-	"github.com/google/gxui/math"
-	"github.com/google/gxui/themes/dark"
+	"github.com/anaminus/gxui"
+	"github.com/anaminus/gxui/drivers/gl"
+	"github.com/anaminus/gxui/math"
+	"github.com/anaminus/gxui/themes/dark"
 )
 
 const SettingsFileName = "rbxplore-settings.json"
