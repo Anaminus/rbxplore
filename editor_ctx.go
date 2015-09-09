@@ -272,16 +272,28 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
-		fmt.Println("TODO: enter Select context")
-		session := &Session{
-			File:   "",
-			Format: FormatNone,
+		selectCtx := &FileSelectContext{
+			SelectedFile: "",
 		}
-		if c.session == nil {
-			c.ChangeSession(session)
+		selectCtx.Finished = func() {
+			if selectCtx.SelectedFile == "" {
+				return
+			}
+			session := &Session{
+				File:   selectCtx.SelectedFile,
+				Format: FormatNone,
+			}
+			if c.session == nil {
+				c.ChangeSession(session)
+				return
+			}
+			if err := SpawnProcess(selectCtx.SelectedFile); err != nil {
+				log.Printf("failed to spawn process: %s\n", err)
+			}
+		}
+		if !ctxc.EnterContext(selectCtx) {
 			return
 		}
-		fmt.Println("TODO: spawn process with selected file")
 	})
 	actionButton("Settings", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
