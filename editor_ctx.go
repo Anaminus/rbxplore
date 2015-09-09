@@ -164,7 +164,7 @@ type propsAdapter struct {
 func (p *propsAdapter) updateProps(inst *rbxfile.Instance) {
 	if inst == nil {
 		p.props = propNodes{}
-		p.DataChanged()
+		p.DataChanged(false)
 		return
 	}
 	p.props = make(propNodes, 0, len(inst.Properties)+1)
@@ -175,7 +175,7 @@ func (p *propsAdapter) updateProps(inst *rbxfile.Instance) {
 		})
 	}
 	sort.Sort(p.props)
-	p.DataChanged()
+	p.DataChanged(false)
 }
 
 func (p propsAdapter) Count() int {
