@@ -61,6 +61,7 @@ func (c *dialog) AddAction(text string, enabled bool, action func()) int {
 	a.label.SetText(text)
 
 	a.button = c.newButton()
+	a.button.SetDesiredSize(ButtonSize)
 	a.button.AddChild(a.label)
 	a.button.OnClick(func(gxui.MouseEvent) {
 		if a.enabled {

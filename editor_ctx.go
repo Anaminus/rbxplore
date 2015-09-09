@@ -255,10 +255,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	menu.SetDirection(gxui.LeftToRight)
 
 	actionButton := func(name string, f func(gxui.MouseEvent)) gxui.Button {
-		label := theme.CreateLabel()
-		label.SetText(name)
-		button := theme.CreateButton()
-		button.AddChild(label)
+		button := CreateButton(theme, name)
 		button.OnClick(f)
 		menu.AddChild(button)
 		return button
