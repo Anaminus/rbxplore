@@ -328,6 +328,14 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		c.changeListener.Unlisten()
 	}
 	c.changeListener = c.OnChangeSession(func(err error) {
+		if err != nil {
+			ctxc.EnterContext(&AlertContext{
+				Title:   "Error",
+				Text:    "Failed to open file: " + err.Error(),
+				Buttons: ButtonsOK,
+			})
+			return
+		}
 		actionSave.SetVisible(c.session != nil)
 		actionSaveAs.SetVisible(c.session != nil)
 		actionClose.SetVisible(c.session != nil)
