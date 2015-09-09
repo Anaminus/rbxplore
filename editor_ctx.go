@@ -219,27 +219,22 @@ type EditorContext struct {
 	changeListener  gxui.EventSubscription
 }
 
-func (c *EditorContext) ChangeSession(s *Session) bool {
-	c.session = s
-	if s == nil {
-		goto finish
-	}
-
-	if s.File != "" {
-		if err := c.session.DecodeFile(); err != nil {
+func (c *EditorContext) ChangeSession(s *Session) (err error) {
+	if s != nil && s.File != "" {
+		if err = s.DecodeFile(); err != nil {
 			log.Printf("failed to decode session file: %s\n", err)
-			return false
 		}
 	}
-
-finish:
-	c.onChangeSession.Fire()
-	return true
+	if err == nil {
+		c.session = s
+	}
+	c.onChangeSession.Fire(err)
+	return
 }
 
-func (c *EditorContext) OnChangeSession(f func()) gxui.EventSubscription {
+func (c *EditorContext) OnChangeSession(f func(error)) gxui.EventSubscription {
 	if c.onChangeSession == nil {
-		c.onChangeSession = gxui.CreateEvent(func() {})
+		c.onChangeSession = gxui.CreateEvent(func(error) {})
 	}
 	return c.onChangeSession.Listen(f)
 }
@@ -331,7 +326,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	if c.changeListener != nil {
 		c.changeListener.Unlisten()
 	}
-	c.changeListener = c.OnChangeSession(func() {
+	c.changeListener = c.OnChangeSession(func(err error) {
 		actionSave.SetVisible(c.session != nil)
 		actionSaveAs.SetVisible(c.session != nil)
 		actionClose.SetVisible(c.session != nil)
