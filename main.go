@@ -132,8 +132,6 @@ func guiMain(driver gxui.Driver) {
 
 func main() {
 	flag.BoolVar(&Option.Debug, "debug", false, "Output debug messages to stdout.")
-	InitDebug()
-
 	flag.StringVar(&Option.SettingsFile, "settings", "", "Read and write settings from `file`. If unspecified, 'rbxplore-settings.json' is read/written from the same location as the executable.")
 	flag.BoolVar(&Option.UpdateData, "updatedata", false, "Update ReflectionMetadata and API dump files.")
 	flag.BoolVar(&Option.Shell, "shell", false, "Runs the program without a GUI.")
@@ -142,6 +140,7 @@ func main() {
 	flag.BoolVar(&Option.New, "new", false, "If running with a GUI, force a new session to be opened.")
 	flag.Parse()
 	Option.InputFile = flag.Arg(0)
+	InitDebug()
 
 	InitSettings()
 	Settings.SetFile(Option.SettingsFile)
