@@ -10,7 +10,6 @@ import (
 type UpdateDialogContext struct {
 	dialog         Dialog
 	ctxc           *ContextController
-	ok             bool
 	UpdateFinished func()
 }
 
