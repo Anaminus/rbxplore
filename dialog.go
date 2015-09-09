@@ -128,13 +128,13 @@ func CreateDialog(theme gxui.Theme) Dialog {
 	actionContainer := theme.CreateLinearLayout()
 	actionContainer.SetDirection(gxui.LeftToRight)
 	actionContainer.SetVerticalAlignment(gxui.AlignMiddle)
-	actionContainer.SetHorizontalAlignment(gxui.AlignRight)
+	actionContainer.SetHorizontalAlignment(gxui.AlignCenter)
 	c.actionContainer = actionContainer
 
 	layout := theme.CreateLinearLayout()
 	layout.SetBackgroundBrush(gxui.Brush{Color: gxui.Color{0.2, 0.2, 0.2, 1}})
 	layout.SetDirection(gxui.TopToBottom)
-	layout.SetHorizontalAlignment(gxui.AlignLeft)
+	layout.SetHorizontalAlignment(gxui.AlignCenter)
 	layout.AddChild(c.title)
 	layout.AddChild(container)
 	layout.AddChild(actionContainer)
