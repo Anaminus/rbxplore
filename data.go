@@ -80,7 +80,7 @@ func (d *dataStruct) Reload(l *DataLocations) {
 		}
 		return err
 	})
-	d.regenerateIcons()
+	d.regenerateIcons(l.IconFile, IconFileName)
 }
 
 func (d *dataStruct) reloadItem(name, file, fileAlt string, reload func(r io.ReadSeeker) error) {
@@ -104,7 +104,7 @@ failed:
 	log.Printf("failed to reload %s: %s\n", name, err)
 }
 
-func (d *dataStruct) regenerateIcons() {
+func (d *dataStruct) regenerateIcons(file, fileAlt string) {
 	if d.driver == nil {
 		return
 	}
@@ -118,7 +118,7 @@ func (d *dataStruct) regenerateIcons() {
 		}
 	}()
 
-	file, _ := getFileNearExec(Settings.Get("icon_file").(string), IconFileName)
+	file, _ = getFileNearExec(file, fileAlt)
 	f, err := os.Open(file)
 	if err != nil {
 		log.Println("failed to open icons:", err)
