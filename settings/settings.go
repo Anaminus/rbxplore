@@ -43,6 +43,10 @@ type Settings interface {
 	// the settings file.
 	Set(name string, value interface{}) (ok bool)
 
+	// Sets sets the values of each valid setting in the given map. The
+	// settings are then saved to the settings file.
+	Sets(values map[string]interface{})
+
 	// SetFileReloading sets whether settings should be reloaded when the
 	// settings file changes.
 	SetFileReloading(active bool) error
@@ -227,6 +231,26 @@ func (s *settingsMap) Set(name string, value interface{}) (ok bool) {
 		hook.Fire(old, value)
 	}
 	return true
+}
+
+func (s *settingsMap) Sets(values map[string]interface{}) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	for name, value := range values {
+		old, ok := s.values[name]
+		if !ok {
+			continue
+		}
+		if !typesMatch(old, value) {
+			continue
+		}
+		s.values[name] = value
+		if hook, ok := s.hooks[name]; ok {
+			hook.Fire(old, value)
+		}
+	}
+	s.save()
 }
 
 func (s *settingsMap) SetFileReloading(active bool) error {
