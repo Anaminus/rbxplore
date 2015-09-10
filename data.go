@@ -2,21 +2,25 @@ package main
 
 import (
 	"fmt"
+	"github.com/anaminus/gxui"
+	"github.com/anaminus/rbxplore/download"
+	"github.com/anaminus/rbxplore/event"
 	"github.com/anaminus/rbxplore/settings"
 	"github.com/kardianos/osext"
+	"github.com/robloxapi/rbxdump"
+	"github.com/robloxapi/rbxfile"
+	_ "github.com/robloxapi/rbxfile/bin"
+	_ "github.com/robloxapi/rbxfile/xml"
+	"image"
+	"image/draw"
+	"image/png"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
-
-	"github.com/anaminus/rbxplore/download"
-	"github.com/anaminus/rbxplore/event"
-	"github.com/robloxapi/rbxdump"
-	"github.com/robloxapi/rbxfile"
-	_ "github.com/robloxapi/rbxfile/bin"
-	_ "github.com/robloxapi/rbxfile/xml"
 )
 
 const RMDFileName = "ReflectionMetadata.xml"
@@ -48,9 +52,11 @@ func (d *DataLocations) FromSettings(s settings.Settings) *DataLocations {
 }
 
 type dataStruct struct {
-	RMD *rbxfile.Root
-	API *rbxdump.API
-	dl  *download.Download
+	RMD    *rbxfile.Root
+	API    *rbxdump.API
+	Icons  map[string]gxui.Texture
+	driver gxui.Driver
+	dl     *download.Download
 }
 
 func (d *dataStruct) OnUpdateProgress(progress func(...interface{})) *event.Connection {
@@ -74,6 +80,7 @@ func (d *dataStruct) Reload(l *DataLocations) {
 		}
 		return err
 	})
+	d.regenerateIcons()
 }
 
 func (d *dataStruct) reloadItem(name, file, fileAlt string, reload func(r io.ReadSeeker) error) {
@@ -95,6 +102,87 @@ func (d *dataStruct) reloadItem(name, file, fileAlt string, reload func(r io.Rea
 	}
 failed:
 	log.Printf("failed to reload %s: %s\n", name, err)
+}
+
+func (d *dataStruct) regenerateIcons() {
+	if d.driver == nil {
+		return
+	}
+
+	const size = 16
+
+	var err error
+	defer func() {
+		if err != nil {
+			d.Icons = nil
+		}
+	}()
+
+	file, _ := getFileNearExec(Settings.Get("icon_file").(string), IconFileName)
+	f, err := os.Open(file)
+	if err != nil {
+		log.Println("failed to open icons:", err)
+		return
+	}
+	source, err := png.Decode(f)
+	if err != nil {
+		log.Println("failed to decode icons:", err)
+		f.Close()
+		return
+	}
+
+	f, err = os.Open("ReflectionMetadata.xml")
+	if err != nil {
+		log.Println("failed to open RMD:", err)
+		return
+	}
+	rmd, err := rbxfile.Decode(f)
+	if err != nil {
+		log.Println("failed to decode RMD:", err)
+		f.Close()
+		return
+	}
+	f.Close()
+
+	// GL uses the pixel array directly, so using SubImage will produce
+	// garbled images.
+	textures := make([]gxui.Texture, source.Bounds().Max.X/size)
+	if len(textures) == 0 {
+		return
+	}
+	for i := range textures {
+		rgba := image.NewRGBA(image.Rect(0, 0, size, size))
+		draw.Draw(rgba, rgba.Bounds(), source, image.Pt(i*size, 0), draw.Src)
+		textures[i] = d.driver.CreateTexture(rgba, 1)
+	}
+
+	d.Icons = make(map[string]gxui.Texture, 64)
+	d.Icons[""] = textures[0]
+	for _, inst := range rmd.Instances {
+		if inst.ClassName != "ReflectionMetadataClasses" {
+			continue
+		}
+		for _, inst := range inst.GetChildren() {
+			if inst.ClassName != "ReflectionMetadataClass" {
+				continue
+			}
+			name := inst.Name()
+			if name == "" {
+				continue
+			}
+			v := inst.Get("ExplorerImageIndex")
+			if v, ok := v.(rbxfile.ValueString); ok {
+				index, err := strconv.Atoi(string(v))
+				if err != nil {
+					continue
+				}
+				if index >= len(textures) || index < 0 {
+					continue
+				}
+				d.Icons[name] = textures[index]
+			}
+		}
+	}
 }
 
 func (d *dataStruct) Update(l *DataLocations) error {
@@ -170,8 +258,9 @@ func (d *dataStruct) CancelUpdate() error {
 
 var Data *dataStruct
 
-func InitData() {
+func InitData(driver gxui.Driver) {
 	Data = &dataStruct{
+		driver: driver,
 		dl: &download.Download{
 			UpdateRate: time.Millisecond * 50,
 		},

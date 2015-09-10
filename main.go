@@ -41,6 +41,8 @@ var Option struct {
 }
 
 func shellMain() {
+	InitData(nil)
+
 	if Option.UpdateData {
 		conn := Data.OnUpdateProgress(func(v ...interface{}) {
 			name := v[0].(string)
@@ -95,6 +97,8 @@ func shellMain() {
 }
 
 func guiMain(driver gxui.Driver) {
+	InitData(driver)
+
 	theme := dark.CreateTheme(driver)
 	window := theme.CreateWindow(800, 600, "rbxplore")
 
@@ -105,7 +109,6 @@ func guiMain(driver gxui.Driver) {
 	go func() {
 		<-startSession
 		driver.Call(func() {
-			GenerateIconTextures(driver)
 			if Option.InputFile != "" {
 				editor.ChangeSession(&Session{
 					File: Option.InputFile,
@@ -146,8 +149,6 @@ func main() {
 	Settings.SetFile(Option.SettingsFile)
 	Settings.Load()
 	Settings.Save()
-
-	InitData()
 
 	if Option.Shell {
 		shellMain()

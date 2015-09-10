@@ -61,12 +61,12 @@ func (inst instanceNode) Create(theme gxui.Theme) gxui.Control {
 		})
 	}
 
-	if len(IconTextures) == 0 {
+	if len(Data.Icons) == 0 {
 		return label
 	}
-	texture, ok := IconTextures[inst.ClassName]
+	texture, ok := Data.Icons[inst.ClassName]
 	if !ok {
-		texture = IconTextures[""]
+		texture = Data.Icons[""]
 	}
 	icon := theme.CreateImage()
 	icon.SetTexture(texture)
