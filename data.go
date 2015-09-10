@@ -131,18 +131,10 @@ func (d *dataStruct) regenerateIcons(file, fileAlt string) {
 		return
 	}
 
-	f, err = os.Open("ReflectionMetadata.xml")
-	if err != nil {
-		log.Println("failed to open RMD:", err)
+	if d.RMD == nil {
+		log.Println("failed to generate icons: no ReflectionMetadata")
 		return
 	}
-	rmd, err := rbxfile.Decode(f)
-	if err != nil {
-		log.Println("failed to decode RMD:", err)
-		f.Close()
-		return
-	}
-	f.Close()
 
 	// GL uses the pixel array directly, so using SubImage will produce
 	// garbled images.
@@ -158,7 +150,7 @@ func (d *dataStruct) regenerateIcons(file, fileAlt string) {
 
 	d.Icons = make(map[string]gxui.Texture, 64)
 	d.Icons[""] = textures[0]
-	for _, inst := range rmd.Instances {
+	for _, inst := range d.RMD.Instances {
 		if inst.ClassName != "ReflectionMetadataClasses" {
 			continue
 		}
