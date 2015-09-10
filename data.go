@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/anaminus/rbxplore/settings"
 	"github.com/kardianos/osext"
 	"io"
 	"io/ioutil"
@@ -27,6 +28,25 @@ const APIUpdateURL = "https://anaminus.github.io/rbx/raw/api/latest.txt"
 const IconFileName = "icon-explorer.png"
 const IconUpdateURL = "http://anaminus.github.io/api/img/icon-explorer.png"
 
+type DataLocations struct {
+	RMDFile  string
+	RMDURL   string
+	APIFile  string
+	APIURL   string
+	IconFile string
+	IconURL  string
+}
+
+func (d *DataLocations) FromSettings(s settings.Settings) *DataLocations {
+	d.RMDFile = s.Get("rmd_file").(string)
+	d.RMDURL = s.Get("rmd_update_url").(string)
+	d.APIFile = s.Get("api_file").(string)
+	d.APIURL = s.Get("api_update_url").(string)
+	d.IconFile = s.Get("icon_file").(string)
+	d.IconURL = s.Get("icon_update_url").(string)
+	return d
+}
+
 type dataStruct struct {
 	RMD *rbxfile.Root
 	API *rbxdump.API
@@ -37,8 +57,8 @@ func (d *dataStruct) OnUpdateProgress(progress func(...interface{})) *event.Conn
 	return d.dl.OnProgress(progress)
 }
 
-func (d *dataStruct) Reload() {
-	d.reloadItem("ReflectionMetadata", "rmd_file", RMDFileName, func(r io.ReadSeeker) error {
+func (d *dataStruct) Reload(l *DataLocations) {
+	d.reloadItem("ReflectionMetadata", l.RMDFile, RMDFileName, func(r io.ReadSeeker) error {
 		var err error
 		d.RMD, err = rbxfile.Decode(r)
 		if err != nil {
@@ -46,7 +66,7 @@ func (d *dataStruct) Reload() {
 		}
 		return err
 	})
-	d.reloadItem("API", "api_file", APIFileName, func(r io.ReadSeeker) error {
+	d.reloadItem("API", l.APIFile, APIFileName, func(r io.ReadSeeker) error {
 		var err error
 		d.API, err = rbxdump.Decode(r)
 		if err != nil {
@@ -56,8 +76,8 @@ func (d *dataStruct) Reload() {
 	})
 }
 
-func (d *dataStruct) reloadItem(name, fileSetting, fileAlt string, reload func(r io.ReadSeeker) error) {
-	file, err := getFileNearExec(Settings.Get(fileSetting).(string), fileAlt)
+func (d *dataStruct) reloadItem(name, file, fileAlt string, reload func(r io.ReadSeeker) error) {
+	file, err := getFileNearExec(file, fileAlt)
 	if err != nil {
 		goto failed
 	}
@@ -77,21 +97,20 @@ failed:
 	log.Printf("failed to reload %s: %s\n", name, err)
 }
 
-func (d *dataStruct) Update() error {
-	if err := d.updateItem("ReflectionMetadata", "rmd_file", RMDFileName, "rmd_update_url", RMDUpdateURL); err != nil {
+func (d *dataStruct) Update(l *DataLocations) error {
+	if err := d.updateItem("ReflectionMetadata", l.RMDFile, RMDFileName, l.RMDURL, RMDUpdateURL); err != nil {
 		return err
 	}
-	if err := d.updateItem("API dump", "api_file", APIFileName, "api_update_url", APIUpdateURL); err != nil {
+	if err := d.updateItem("API dump", l.APIFile, APIFileName, l.APIURL, APIUpdateURL); err != nil {
 		return err
 	}
-	if err := d.updateItem("Icons", "icon_file", IconFileName, "icon_update_url", IconUpdateURL); err != nil {
+	if err := d.updateItem("Icons", l.IconFile, IconFileName, l.APIURL, IconUpdateURL); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *dataStruct) updateItem(name, fileSetting, fileAlt, urlSetting, urlAlt string) error {
-	file, _ := Settings.Get(fileSetting).(string)
+func (d *dataStruct) updateItem(name, file, fileAlt, url, urlAlt string) error {
 	file, err := getFileNearExec(file, fileAlt)
 	if err != nil {
 		return fmt.Errorf("update %s: %s", name, err)
@@ -103,7 +122,6 @@ func (d *dataStruct) updateItem(name, fileSetting, fileAlt, urlSetting, urlAlt s
 	}
 	defer f.Close()
 
-	url, _ := Settings.Get(urlSetting).(string)
 	if url == "" {
 		url = urlAlt
 	}

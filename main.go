@@ -60,14 +60,14 @@ func shellMain() {
 				}
 			}
 		})
-		err := Data.Update()
+		err := Data.Update(new(DataLocations).FromSettings(Settings))
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 		conn.Disconnect()
 	}
 
-	Data.Reload()
+	Data.Reload(new(DataLocations).FromSettings(Settings))
 
 	session := new(Session)
 	if Option.InputFile != "" {

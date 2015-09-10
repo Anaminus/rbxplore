@@ -8,6 +8,7 @@ import (
 )
 
 type UpdateDialogContext struct {
+	DataLocations  *DataLocations
 	dialog         Dialog
 	ctxc           *ContextController
 	UpdateFinished func()
@@ -64,7 +65,12 @@ func (c *UpdateDialogContext) Entering(ctxc *ContextController) ([]gxui.Control,
 	})
 
 	go func() {
-		err := Data.Update()
+		var err error
+		if c.DataLocations == nil {
+			err = Data.Update(new(DataLocations).FromSettings(Settings))
+		} else {
+			err = Data.Update(c.DataLocations)
+		}
 		driver.CallSync(func() {
 			pbar.SetTarget(1)
 			pbar.SetProgress(0)
