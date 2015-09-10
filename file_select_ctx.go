@@ -276,7 +276,9 @@ func (c *FileSelectContext) Entering(ctxc *ContextController) ([]gxui.Control, b
 	})
 
 	var startDir string
-	if LastFileLocation == "" {
+	if c.SelectedFile != "" {
+		startDir = filepath.Dir(c.SelectedFile)
+	} else if LastFileLocation == "" {
 		if cwd, err := os.Getwd(); err == nil {
 			startDir = cwd
 		}
