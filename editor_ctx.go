@@ -299,7 +299,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
-		fmt.Println("TODO: enter Settings context")
+		ctxc.EnterContext(&SettingsContext{})
 	})
 
 	actionSave := actionButton("Save", func(e gxui.MouseEvent) {
