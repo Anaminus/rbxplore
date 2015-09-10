@@ -192,7 +192,7 @@ func (d *dataStruct) Update(l *DataLocations) error {
 	if err := d.updateItem("API dump", l.APIFile, APIFileName, l.APIURL, APIUpdateURL); err != nil {
 		return err
 	}
-	if err := d.updateItem("Icons", l.IconFile, IconFileName, l.APIURL, IconUpdateURL); err != nil {
+	if err := d.updateItem("Icons", l.IconFile, IconFileName, l.IconURL, IconUpdateURL); err != nil {
 		return err
 	}
 	return nil
