@@ -109,6 +109,7 @@ func guiMain(driver gxui.Driver) {
 	go func() {
 		<-startSession
 		driver.Call(func() {
+			Data.Reload(new(DataLocations).FromSettings(Settings))
 			if Option.InputFile != "" {
 				editor.ChangeSession(&Session{
 					File: Option.InputFile,
