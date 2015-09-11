@@ -62,6 +62,8 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	right.SetPadding(math.Spacing{20, 0, 0, 0})
 	layout.AddChild(right)
 
+	dropdown := theme.CreateDropDownList()
+
 	// File
 	{
 		label := theme.CreateLabel()
@@ -78,6 +80,12 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		textbox.SetText(c.File)
 		textbox.OnTextChanged(func([]gxui.TextBoxEdit) {
 			c.File = textbox.Text()
+			ext := filepath.Ext(c.File)
+			if len(ext) > 1 {
+				if f := FormatFromString(ext[1:]); f != FormatNone {
+					dropdown.Select(f)
+				}
+			}
 			setCanExport()
 		})
 		layout.AddChild(textbox)
@@ -114,7 +122,6 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		layout.SetDirection(gxui.LeftToRight)
 		layout.SetVerticalAlignment(gxui.AlignMiddle)
 
-		dropdown := theme.CreateDropDownList()
 		dropdown.SetAdapter(new(FormatAdapter))
 		dropdown.SetBubbleOverlay(bubble)
 		dropdown.SetPadding(math.Spacing{5, 5, 5, 5})
