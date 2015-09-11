@@ -5,13 +5,11 @@ import (
 	"github.com/anaminus/gxui/math"
 )
 
-var ButtonSize = math.Size{60, 0}
+var ButtonSize = math.Size{60, 26}
 
 func CreateButton(theme gxui.Theme, text string) gxui.Button {
 	button := theme.CreateButton()
 	button.SetDesiredSize(ButtonSize)
-	label := theme.CreateLabel()
-	label.SetText(text)
-	button.AddChild(label)
+	button.SetText(text)
 	return button
 }

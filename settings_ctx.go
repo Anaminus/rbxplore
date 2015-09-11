@@ -56,7 +56,7 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 			file := item.file
 			label := ctxc.Theme().CreateLabel()
 			m := label.Margin()
-			label.SetMargin(math.Spacing{m.L, 9, m.R, 9})
+			label.SetMargin(math.Spacing{m.L, 8, m.R, 8})
 			label.SetText(item.name)
 			left.AddChild(label)
 
