@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/anaminus/gxui"
 	"github.com/anaminus/gxui/math"
+	"os"
+	"path/filepath"
 )
 
 type ExportContext struct {
@@ -20,8 +22,25 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	dialog := CreateDialog(theme)
 	dialog.SetTitle("Export")
 	actionExport := dialog.AddAction("Export", true, func() {
-		c.ok = true
-		ctxc.ExitContext()
+		if c.File == "" || c.Format == FormatNone {
+			return
+		}
+		if _, err := os.Stat(c.File); !os.IsNotExist(err) {
+			ctxc.EnterContext(&AlertContext{
+				Title:   "Confirm Overwrite",
+				Text:    filepath.Base(c.File) + " already exists.\nWould you like to replace it?",
+				Buttons: ButtonsYesNo,
+				Finished: func(ok bool) {
+					if ok {
+						c.ok = true
+						ctxc.ExitContext()
+					}
+				},
+			})
+		} else {
+			c.ok = true
+			ctxc.ExitContext()
+		}
 	})
 	dialog.AddAction("Cancel", true, func() {
 		c.ok = false
