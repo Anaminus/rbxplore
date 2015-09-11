@@ -5,13 +5,6 @@ import (
 	"github.com/anaminus/gxui/math"
 )
 
-type DialogButtons byte
-
-const (
-	ButtonsOK DialogButtons = iota
-	ButtonsOKCancel
-)
-
 type Dialog interface {
 	Container() gxui.Container
 	Control() gxui.Control

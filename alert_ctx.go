@@ -4,6 +4,13 @@ import (
 	"github.com/anaminus/gxui"
 )
 
+type DialogButtons byte
+
+const (
+	ButtonsOK DialogButtons = iota
+	ButtonsOKCancel
+)
+
 type AlertContext struct {
 	Buttons  DialogButtons
 	Title    string
