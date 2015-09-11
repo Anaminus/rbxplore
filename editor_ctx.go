@@ -405,3 +405,15 @@ func (c *EditorContext) Exiting(*ContextController) {
 func (c *EditorContext) IsDialog() bool {
 	return false
 }
+
+func (c *EditorContext) Direction() gxui.Direction {
+	return gxui.TopToBottom
+}
+
+func (c *EditorContext) HorizontalAlignment() gxui.HorizontalAlignment {
+	return gxui.AlignLeft
+}
+
+func (c *EditorContext) VerticalAlignment() gxui.VerticalAlignment {
+	return gxui.AlignTop
+}

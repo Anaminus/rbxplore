@@ -326,3 +326,15 @@ func (c *FileSelectContext) Exiting(ctxc *ContextController) {
 func (c *FileSelectContext) IsDialog() bool {
 	return false
 }
+
+func (c *FileSelectContext) Direction() gxui.Direction {
+	return gxui.TopToBottom
+}
+
+func (c *FileSelectContext) HorizontalAlignment() gxui.HorizontalAlignment {
+	return gxui.AlignLeft
+}
+
+func (c *FileSelectContext) VerticalAlignment() gxui.VerticalAlignment {
+	return gxui.AlignTop
+}

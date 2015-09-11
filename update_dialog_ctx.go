@@ -101,3 +101,15 @@ func (c *UpdateDialogContext) Exiting(*ContextController) {
 func (c *UpdateDialogContext) IsDialog() bool {
 	return true
 }
+
+func (c *UpdateDialogContext) Direction() gxui.Direction {
+	return gxui.TopToBottom
+}
+
+func (c *UpdateDialogContext) HorizontalAlignment() gxui.HorizontalAlignment {
+	return gxui.AlignCenter
+}
+
+func (c *UpdateDialogContext) VerticalAlignment() gxui.VerticalAlignment {
+	return gxui.AlignMiddle
+}

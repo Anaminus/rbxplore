@@ -46,3 +46,15 @@ func (c *AlertContext) Exiting(*ContextController) {
 func (c *AlertContext) IsDialog() bool {
 	return true
 }
+
+func (c *AlertContext) Direction() gxui.Direction {
+	return gxui.TopToBottom
+}
+
+func (c *AlertContext) HorizontalAlignment() gxui.HorizontalAlignment {
+	return gxui.AlignCenter
+}
+
+func (c *AlertContext) VerticalAlignment() gxui.VerticalAlignment {
+	return gxui.AlignMiddle
+}

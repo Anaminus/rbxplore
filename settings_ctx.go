@@ -178,3 +178,15 @@ func (c *SettingsContext) Exiting(ctxc *ContextController) {
 func (c *SettingsContext) IsDialog() bool {
 	return false
 }
+
+func (c *SettingsContext) Direction() gxui.Direction {
+	return gxui.TopToBottom
+}
+
+func (c *SettingsContext) HorizontalAlignment() gxui.HorizontalAlignment {
+	return gxui.AlignCenter
+}
+
+func (c *SettingsContext) VerticalAlignment() gxui.VerticalAlignment {
+	return gxui.AlignTop
+}

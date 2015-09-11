@@ -8,13 +8,15 @@ type Context interface {
 	Entering(*ContextController) ([]gxui.Control, bool)
 	Exiting(*ContextController)
 	IsDialog() bool
+	Direction() gxui.Direction
+	HorizontalAlignment() gxui.HorizontalAlignment
+	VerticalAlignment() gxui.VerticalAlignment
 }
 
 type contextItem struct {
-	context  Context
-	controls []gxui.Control
-	bubbles  []gxui.BubbleOverlay
-	dialog   gxui.Control
+	context Context
+	layout  gxui.LinearLayout
+	bubbles []gxui.BubbleOverlay
 }
 
 type ContextController struct {
@@ -24,65 +26,50 @@ type ContextController struct {
 	stack  []contextItem
 }
 
-func (c *ContextController) createContextItem(ctx Context) bool {
+func (c *ContextController) createContextItem(ctx Context) (ctxi contextItem, ok bool) {
 	controls, ok := ctx.Entering(c)
 	if !ok {
-		return false
+		return ctxi, false
 	}
 
-	ctxi := contextItem{
-		context: ctx,
+	ctxi.context = ctx
+	ctxi.layout = c.theme.CreateLinearLayout()
+	ctxi.layout.SetSizeMode(gxui.Fill)
+	ctxi.layout.SetDirection(ctx.Direction())
+	ctxi.layout.SetHorizontalAlignment(ctx.HorizontalAlignment())
+	ctxi.layout.SetVerticalAlignment(ctx.VerticalAlignment())
+	if ctx.IsDialog() {
+		ctxi.layout.SetBackgroundBrush(gxui.Brush{Color: gxui.Color{0, 0, 0, 0.8}})
+	} else {
+		ctxi.layout.SetBackgroundBrush(gxui.Brush{Color: gxui.Color{0, 0, 0, 1}})
 	}
-	ct := make([]gxui.Control, 0, len(controls))
 	for _, control := range controls {
 		if b, ok := control.(gxui.BubbleOverlay); ok {
 			ctxi.bubbles = append(ctxi.bubbles, b)
 		} else {
-			ct = append(ct, control)
+			ctxi.layout.AddChild(control)
 		}
 	}
-	ctxi.controls = ct
 
-	if ctx.IsDialog() {
-		ctxi.dialog = CreateAbsorber(c.theme, gxui.Color{0, 0, 0, 0.5}, ctxi.controls...)
-	}
-	c.stack = append(c.stack, ctxi)
-	return true
-}
-
-func (c *ContextController) applyContext() {
-	if len(c.stack) < 1 {
-		panic("empty context stack")
-	}
-	ctxi := c.stack[len(c.stack)-1]
-	if ctxi.dialog != nil {
-		// Lay controls over current context, using a layout that blocks
-		// input.
-		c.window.AddChild(ctxi.dialog)
-	} else {
-		// Replace current controls with new controls.
-		c.window.RemoveAll()
-		for _, child := range ctxi.controls {
-			c.window.AddChild(child)
-		}
-	}
-	for _, child := range ctxi.bubbles {
-		c.window.AddChild(child)
-	}
+	return ctxi, true
 }
 
 func (c *ContextController) EnterContext(ctx Context) bool {
 	if len(c.stack) < 1 {
 		panic("empty context stack")
 	}
-	// Fail if current context is a dialog.
-	if c.stack[len(c.stack)-1].dialog != nil {
+
+	ctxi, ok := c.createContextItem(ctx)
+	if !ok {
 		return false
 	}
-	if !c.createContextItem(ctx) {
-		return false
+
+	c.stack = append(c.stack, ctxi)
+	c.window.AddChild(ctxi.layout)
+	for _, bubble := range ctxi.bubbles {
+		c.window.AddChild(bubble)
 	}
-	c.applyContext()
+
 	return true
 }
 
@@ -90,21 +77,19 @@ func (c *ContextController) ExitContext() bool {
 	if len(c.stack) < 1 {
 		panic("empty context stack")
 	}
+
 	// Fail if there is only one context.
 	if len(c.stack) <= 1 {
 		return false
 	}
+
 	ctxi := c.stack[len(c.stack)-1]
 	c.stack[len(c.stack)-1] = contextItem{}
 	c.stack = c.stack[:len(c.stack)-1]
 
-	if ctxi.dialog != nil {
-		c.window.RemoveChild(ctxi.dialog)
-		for _, child := range ctxi.bubbles {
-			c.window.RemoveChild(child)
-		}
-	} else {
-		c.applyContext()
+	c.window.RemoveChild(ctxi.layout)
+	for _, bubble := range ctxi.bubbles {
+		c.window.RemoveChild(bubble)
 	}
 
 	ctxi.context.Exiting(c)
@@ -131,9 +116,14 @@ func CreateContextController(driver gxui.Driver, window gxui.Window, theme gxui.
 		theme:  theme,
 		stack:  make([]contextItem, 0, 4),
 	}
-	if !c.createContextItem(ctx) {
-		return c, false
+	ctxi, ok := c.createContextItem(ctx)
+	if !ok {
+		return nil, false
 	}
-	c.applyContext()
+	c.stack = append(c.stack, ctxi)
+	c.window.AddChild(ctxi.layout)
+	for _, bubble := range ctxi.bubbles {
+		c.window.AddChild(bubble)
+	}
 	return c, true
 }
