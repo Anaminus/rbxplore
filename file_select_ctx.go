@@ -243,9 +243,7 @@ func (c *FileSelectContext) Entering(ctxc *ContextController) ([]gxui.Control, b
 		}
 	})
 
-	// When the directory selection changes, update the files list
-	directories.OnSelectionChanged(func(item gxui.AdapterItem) {
-		dir := item.(string)
+	updateFiles := func(dir string) {
 		files := []string{}
 		filepath.Walk(dir, func(subpath string, info os.FileInfo, err error) error {
 			if err == nil && dir != subpath {
@@ -257,6 +255,35 @@ func (c *FileSelectContext) Entering(ctxc *ContextController) ([]gxui.Control, b
 			return nil
 		})
 		filesAdapter.SetFiles(files)
+	}
+
+	if c.SelectedFile != "" {
+		dir := filepath.Dir(c.SelectedFile)
+		if directories.Select(dir) {
+			directories.Show(directories.Selected())
+			updateFiles(dir)
+			fullpath.SetText(c.SelectedFile)
+		}
+	} else if LastFileLocation == "" {
+		if cwd, err := os.Getwd(); err == nil {
+			if directories.Select(cwd) {
+				directories.Show(directories.Selected())
+				updateFiles(cwd)
+				fullpath.SetText(cwd)
+			}
+		}
+	} else {
+		if directories.Select(LastFileLocation) {
+			directories.Show(directories.Selected())
+			updateFiles(LastFileLocation)
+			fullpath.SetText(LastFileLocation)
+		}
+	}
+
+	// When the directory selection changes, update the files list
+	directories.OnSelectionChanged(func(item gxui.AdapterItem) {
+		dir := item.(string)
+		updateFiles(dir)
 		fullpath.SetText(dir)
 		c.SelectedFile = dir
 	})
@@ -274,20 +301,6 @@ func (c *FileSelectContext) Entering(ctxc *ContextController) ([]gxui.Control, b
 			enterDirOrExit(path)
 		}
 	})
-
-	var startDir string
-	if c.SelectedFile != "" {
-		startDir = filepath.Dir(c.SelectedFile)
-	} else if LastFileLocation == "" {
-		if cwd, err := os.Getwd(); err == nil {
-			startDir = cwd
-		}
-	} else {
-		startDir = LastFileLocation
-	}
-	if directories.Select(startDir) {
-		directories.Show(directories.Selected())
-	}
 
 	splitter := theme.CreateSplitterLayout()
 	splitter.SetOrientation(gxui.Horizontal)
