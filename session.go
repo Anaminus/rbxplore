@@ -24,6 +24,22 @@ const (
 	FormatJSON
 )
 
+func (f Format) String() string {
+	switch f {
+	case FormatRBXL:
+		return "rbxl"
+	case FormatRBXM:
+		return "rbxm"
+	case FormatRBXLX:
+		return "rbxlx"
+	case FormatRBXMX:
+		return "rbxmx"
+	case FormatJSON:
+		return "json"
+	}
+	return ""
+}
+
 func FormatFromString(s string) Format {
 	switch s {
 	case "rbxl":
