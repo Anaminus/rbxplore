@@ -26,6 +26,7 @@ func InitSettings() {
 		"rmd_update_url":  RMDUpdateURL,
 		"api_update_url":  APIUpdateURL,
 		"icon_update_url": IconUpdateURL,
+		"spawn_processes": true,
 	})
 }
 

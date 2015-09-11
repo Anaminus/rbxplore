@@ -264,13 +264,23 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 			c.ChangeSession(&Session{})
 			return
 		}
-		if err := SpawnProcess("--new"); err != nil {
-			log.Printf("failed to spawn process: %s\n", err)
+		if Settings.Get("spawn_processes").(bool) {
+			if err := SpawnProcess("--new"); err != nil {
+				log.Printf("failed to spawn process: %s\n", err)
+			}
+			return
 		}
+		if c.session != nil {
+			fmt.Println("TODO: prompt to save file")
+		}
+		c.ChangeSession(&Session{})
 	})
 	actionButton("Open", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
 			return
+		}
+		if c.session != nil {
+			fmt.Println("TODO: prompt to save file")
 		}
 		selectCtx := &FileSelectContext{
 			SelectedFile: "",
@@ -280,17 +290,17 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 			if selectCtx.SelectedFile == "" {
 				return
 			}
+			if c.session != nil && Settings.Get("spawn_processes").(bool) {
+				if err := SpawnProcess(selectCtx.SelectedFile); err != nil {
+					log.Printf("failed to spawn process: %s\n", err)
+				}
+				return
+			}
 			session := &Session{
 				File:   selectCtx.SelectedFile,
 				Format: FormatNone,
 			}
-			if c.session == nil {
-				c.ChangeSession(session)
-				return
-			}
-			if err := SpawnProcess(selectCtx.SelectedFile); err != nil {
-				log.Printf("failed to spawn process: %s\n", err)
-			}
+			c.ChangeSession(session)
 		}
 		if !ctxc.EnterContext(selectCtx) {
 			return
