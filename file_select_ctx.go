@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Adapted from github.xom/google/gxui/samples/file_dlg
+// Adapted from github.com/google/gxui/samples/file_dlg
 
 var LastFileLocation = ""
 
