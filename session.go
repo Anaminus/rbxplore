@@ -122,6 +122,25 @@ func (s *Session) DecodeFile() error {
 			return err
 		}
 		return nil
+	case ".rbxl":
+		s.Format = FormatRBXL
+		// Can be either binary or xml.
+		format, _ := rbxfile.GuessFormat(f)
+		if format == nil {
+			return rbxfile.ErrFormat
+		}
+		f.Seek(0, os.SEEK_SET)
+		decode = format.Decode
+
+	case ".rbxm":
+		s.Format = FormatRBXM
+		// Can be either binary or xml.
+		format, _ := rbxfile.GuessFormat(f)
+		if format == nil {
+			return rbxfile.ErrFormat
+		}
+		f.Seek(0, os.SEEK_SET)
+		decode = format.Decode
 	default:
 		// Guess format from content.
 		format, _ := rbxfile.GuessFormat(f)
