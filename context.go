@@ -13,6 +13,7 @@ type Context interface {
 type contextItem struct {
 	context  Context
 	controls []gxui.Control
+	bubbles  []gxui.BubbleOverlay
 	dialog   gxui.Control
 }
 
@@ -28,10 +29,20 @@ func (c *ContextController) createContextItem(ctx Context) bool {
 	if !ok {
 		return false
 	}
+
 	ctxi := contextItem{
-		context:  ctx,
-		controls: controls,
+		context: ctx,
 	}
+	ct := make([]gxui.Control, 0, len(controls))
+	for _, control := range controls {
+		if b, ok := control.(gxui.BubbleOverlay); ok {
+			ctxi.bubbles = append(ctxi.bubbles, b)
+		} else {
+			ct = append(ct, control)
+		}
+	}
+	ctxi.controls = ct
+
 	if ctx.IsDialog() {
 		ctxi.dialog = CreateAbsorber(c.theme, gxui.Color{0, 0, 0, 0.5}, ctxi.controls...)
 	}
@@ -54,6 +65,9 @@ func (c *ContextController) applyContext() {
 		for _, child := range ctxi.controls {
 			c.window.AddChild(child)
 		}
+	}
+	for _, child := range ctxi.bubbles {
+		c.window.AddChild(child)
 	}
 }
 
@@ -86,6 +100,9 @@ func (c *ContextController) ExitContext() bool {
 
 	if ctxi.dialog != nil {
 		c.window.RemoveChild(ctxi.dialog)
+		for _, child := range ctxi.bubbles {
+			c.window.RemoveChild(child)
+		}
 	} else {
 		c.applyContext()
 	}
