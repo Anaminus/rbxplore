@@ -274,6 +274,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		}
 		selectCtx := &FileSelectContext{
 			SelectedFile: "",
+			Type:         FileOpen,
 		}
 		selectCtx.Finished = func() {
 			if selectCtx.SelectedFile == "" {

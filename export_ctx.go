@@ -86,7 +86,6 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		button.OnClick(func(gxui.MouseEvent) {
 			selectCtx := &FileSelectContext{
 				SelectedFile: c.File,
-				Saving:       true,
 			}
 			selectCtx.Finished = func() {
 				if selectCtx.SelectedFile == "" {

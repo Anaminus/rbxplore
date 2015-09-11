@@ -13,6 +13,14 @@ import (
 
 var LastFileLocation = ""
 
+type FileDialogType byte
+
+const (
+	FileSelect FileDialogType = iota
+	FileOpen
+	FileSave
+)
+
 var (
 	fileColor      = gxui.Color{R: 0.7, G: 0.8, B: 1.0, A: 1}
 	directoryColor = gxui.Color{R: 0.8, G: 1.0, B: 0.7, A: 1}
@@ -149,7 +157,7 @@ func (a directoryAdapter) Create(theme gxui.Theme, index int) gxui.Control {
 
 type FileSelectContext struct {
 	SelectedFile string
-	Saving       bool
+	Type         FileDialogType
 	Finished     func()
 	ctxc         *ContextController
 }
@@ -209,8 +217,8 @@ func (c *FileSelectContext) Entering(ctxc *ContextController) ([]gxui.Control, b
 			}
 			return
 		}
-		if !c.Saving && os.IsNotExist(err) {
-			// If we aren't saving, then do nothing if the file does not
+		if c.Type == FileOpen && os.IsNotExist(err) {
+			// If we are opening a file, then do nothing if the file does not
 			// exist.
 			return
 		}
@@ -220,10 +228,13 @@ func (c *FileSelectContext) Entering(ctxc *ContextController) ([]gxui.Control, b
 	}
 
 	var open gxui.Button
-	if c.Saving {
-		open = CreateButton(theme, "Save")
-	} else {
+	switch c.Type {
+	case FileOpen:
 		open = CreateButton(theme, "Open")
+	case FileSave:
+		open = CreateButton(theme, "Save")
+	default:
+		open = CreateButton(theme, "Select")
 	}
 	open.OnClick(func(gxui.MouseEvent) {
 		enterDirOrExit(fullpath.Text())

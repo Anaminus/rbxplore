@@ -78,7 +78,6 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 			button.OnClick(func(gxui.MouseEvent) {
 				selectCtx := &FileSelectContext{
 					SelectedFile: c.settings[file].(string),
-					Saving:       true,
 				}
 				selectCtx.Finished = func() {
 					if selectCtx.SelectedFile == "" {
