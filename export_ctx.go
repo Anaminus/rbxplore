@@ -8,11 +8,12 @@ import (
 )
 
 type ExportContext struct {
-	File     string
-	Format   Format
-	Minified bool
-	ok       bool
-	Finished func(bool)
+	File      string
+	Format    Format
+	Minified  bool
+	Finished  func(bool)
+	ok        bool
+	minButton gxui.Button
 }
 
 func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) {
@@ -110,6 +111,10 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		label.SetMargin(math.Spacing{0, 8, 0, 8})
 		left.AddChild(label)
 
+		layout := theme.CreateLinearLayout()
+		layout.SetDirection(gxui.LeftToRight)
+		layout.SetVerticalAlignment(gxui.AlignMiddle)
+
 		dropdown := theme.CreateDropDownList()
 		dropdown.SetAdapter(new(FormatAdapter))
 		dropdown.SetBubbleOverlay(bubble)
@@ -125,38 +130,21 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 			}
 		})
 		dropdown.Select(c.Format)
-		right.AddChild(dropdown)
-	}
+		layout.AddChild(dropdown)
 
-	// Minified
-	{
-		label := theme.CreateLabel()
-		label.SetText("Minified")
-		label.SetMargin(math.Spacing{0, 8, 0, 8})
-		left.AddChild(label)
+		c.minButton = CreateButton(theme, "Minified")
+		c.minButton.SetType(gxui.ToggleButton)
+		c.minButton.SetChecked(c.Minified)
+		layout.AddChild(c.minButton)
 
-		button := theme.CreateButton()
-		button.SetDesiredSize(ButtonSize)
-		button.OnClick(func(gxui.MouseEvent) {
-			c.Minified = !c.Minified
-			if c.Minified {
-				button.SetText("Yes")
-			} else {
-				button.SetText("No")
-			}
-		})
-		if c.Minified {
-			button.SetText("Yes")
-		} else {
-			button.SetText("No")
-		}
-		right.AddChild(button)
+		right.AddChild(layout)
 	}
 
 	return []gxui.Control{dialog.Control(), bubble}, true
 }
 
 func (c *ExportContext) Exiting(ctxc *ContextController) {
+	c.Minified = c.minButton.IsChecked()
 	if c.Finished != nil {
 		c.Finished(c.ok)
 	}
