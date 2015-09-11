@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/robloxapi/rbxdump"
 	"github.com/robloxapi/rbxfile"
@@ -43,7 +44,7 @@ func (f Format) String() string {
 }
 
 func FormatFromString(s string) Format {
-	switch s {
+	switch strings.ToLower(s) {
 	case "rbxl":
 		return FormatRBXL
 	case "rbxm":
