@@ -76,7 +76,7 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		layout.SetVerticalAlignment(gxui.AlignMiddle)
 
 		textbox := theme.CreateTextBox()
-		textbox.SetDesiredWidth(300)
+		textbox.SetDesiredWidth(400)
 		textbox.SetText(c.File)
 		textbox.OnTextChanged(func([]gxui.TextBoxEdit) {
 			c.File = textbox.Text()
