@@ -318,9 +318,26 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
-		fmt.Println("TODO: enter Export context")
-		fmt.Println("TODO: change session output to selected file")
-		fmt.Println("TODO: write session to selected file")
+		exportCtx := &ExportContext{
+			File:     c.session.File,
+			Format:   c.session.Format,
+			Minified: c.session.Minified,
+		}
+		exportCtx.Finished = func(ok bool) {
+			if ok {
+				c.session.File = exportCtx.File
+				c.session.Format = exportCtx.Format
+				c.session.Minified = exportCtx.Minified
+				if err := c.session.EncodeFile(); err != nil {
+					ctxc.EnterContext(&AlertContext{
+						Title:   "Error",
+						Text:    "Failed to save file: " + err.Error(),
+						Buttons: ButtonsOK,
+					})
+				}
+			}
+		}
+		ctxc.EnterContext(exportCtx)
 	})
 	actionClose := actionButton("Close", func(e gxui.MouseEvent) {
 		if c.session == nil {
