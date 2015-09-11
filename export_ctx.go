@@ -63,6 +63,8 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	layout.AddChild(right)
 
 	dropdown := theme.CreateDropDownList()
+	dropdown.SetAdapter(new(FormatAdapter))
+	dropdown.Select(c.Format)
 
 	// File
 	{
@@ -122,7 +124,6 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		layout.SetDirection(gxui.LeftToRight)
 		layout.SetVerticalAlignment(gxui.AlignMiddle)
 
-		dropdown.SetAdapter(new(FormatAdapter))
 		dropdown.SetBubbleOverlay(bubble)
 		dropdown.SetPadding(math.Spacing{5, 5, 5, 5})
 		dropdown.SetMargin(math.Spacing{3, 3, 3, 3})
@@ -135,7 +136,6 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 				setCanExport()
 			}
 		})
-		dropdown.Select(c.Format)
 		layout.AddChild(dropdown)
 
 		c.minButton = CreateButton(theme, "Minified")
