@@ -9,16 +9,17 @@ type DialogButtons byte
 const (
 	ButtonsOK DialogButtons = iota
 	ButtonsOKCancel
+	ButtonsYesNo
 )
 
 type AlertContext struct {
-	Buttons  DialogButtons
 	Title    string
 	Text     string
-	OK       bool
+	Buttons  DialogButtons
+	Finished func(bool)
 	dialog   Dialog
 	ctxc     *ContextController
-	Finished func(bool)
+	ok       bool
 }
 
 func (c *AlertContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) {
@@ -31,13 +32,28 @@ func (c *AlertContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) 
 	label.SetText(c.Text)
 	c.dialog.Container().AddChild(label)
 
-	c.dialog.AddAction("OK", true, func() {
-		c.OK = true
-		ctxc.ExitContext()
-	})
-	if c.Buttons == ButtonsOKCancel {
+	switch c.Buttons {
+	case ButtonsOK:
+		c.dialog.AddAction("OK", true, func() {
+			c.ok = true
+			ctxc.ExitContext()
+		})
+	case ButtonsOKCancel:
+		c.dialog.AddAction("OK", true, func() {
+			c.ok = true
+			ctxc.ExitContext()
+		})
 		c.dialog.AddAction("Cancel", true, func() {
-			c.OK = false
+			c.ok = false
+			ctxc.ExitContext()
+		})
+	case ButtonsYesNo:
+		c.dialog.AddAction("Yes", true, func() {
+			c.ok = true
+			ctxc.ExitContext()
+		})
+		c.dialog.AddAction("No", true, func() {
+			c.ok = false
 			ctxc.ExitContext()
 		})
 	}
@@ -46,7 +62,7 @@ func (c *AlertContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) 
 
 func (c *AlertContext) Exiting(*ContextController) {
 	if c.Finished != nil {
-		c.Finished(c.OK)
+		c.Finished(c.ok)
 	}
 }
 
