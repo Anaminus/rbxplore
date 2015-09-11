@@ -45,6 +45,7 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 	}
 
 	layout := theme.CreateLinearLayout()
+	layout.SetHorizontalAlignment(gxui.AlignRight)
 
 	// Files
 	{
@@ -145,7 +146,6 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 
 	actions := theme.CreateLinearLayout()
 	actions.SetDirection(gxui.LeftToRight)
-	actions.SetSizeMode(gxui.Fill)
 	actions.SetHorizontalAlignment(gxui.AlignRight)
 	actionOK := CreateButton(theme, "OK")
 	actionOK.OnClick(func(gxui.MouseEvent) {
