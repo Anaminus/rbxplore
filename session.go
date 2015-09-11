@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"github.com/anaminus/gxui"
+	"github.com/anaminus/gxui/math"
 	"io"
 	"os"
 	"path/filepath"
@@ -54,6 +56,36 @@ func FormatFromString(s string) Format {
 		return FormatJSON
 	}
 	return FormatNone
+}
+
+type FormatAdapter struct {
+	gxui.AdapterBase
+}
+
+func (a FormatAdapter) Count() int {
+	return 6
+}
+
+func (a FormatAdapter) ItemAt(index int) gxui.AdapterItem {
+	return Format(index)
+}
+
+func (a FormatAdapter) ItemIndex(item gxui.AdapterItem) int {
+	return int(item.(Format))
+}
+
+func (a FormatAdapter) Create(theme gxui.Theme, index int) gxui.Control {
+	l := theme.CreateLabel()
+	text := Format(index).String()
+	if text == "" {
+		text = "None"
+	}
+	l.SetText(text)
+	return l
+}
+
+func (a FormatAdapter) Size(gxui.Theme) math.Size {
+	return math.Size{W: 60, H: 22}
 }
 
 type Session struct {
