@@ -21,8 +21,8 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	bubble := theme.CreateBubbleOverlay()
 
 	dialog := CreateDialog(theme)
-	dialog.SetTitle("Export")
-	actionExport := dialog.AddAction("Export", true, func() {
+	dialog.SetTitle("Save As...")
+	actionExport := dialog.AddAction("Save", true, func() {
 		if c.File == "" || c.Format == FormatNone {
 			return
 		}
