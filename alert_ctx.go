@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/anaminus/gxui"
+	"strings"
 )
 
 type DialogButtons byte
@@ -28,9 +29,11 @@ func (c *AlertContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) 
 	c.dialog = CreateDialog(theme)
 	c.dialog.SetTitle(c.Title)
 
-	label := theme.CreateLabel()
-	label.SetText(c.Text)
-	c.dialog.Container().AddChild(label)
+	for _, s := range strings.Split(c.Text, "\n") {
+		label := theme.CreateLabel()
+		label.SetText(s)
+		c.dialog.Container().AddChild(label)
+	}
 
 	switch c.Buttons {
 	case ButtonsOK:
