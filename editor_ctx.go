@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"sort"
 
 	"github.com/anaminus/gxui"
@@ -239,6 +240,16 @@ func (c *EditorContext) OnChangeSession(f func(error)) gxui.EventSubscription {
 	return c.onChangeSession.Listen(f)
 }
 
+func (c *EditorContext) updateWindowTitle(window gxui.Window) {
+	if c.session == nil {
+		window.SetTitle("rbxplore")
+	} else if c.session.File == "" {
+		window.SetTitle("(new file) - rbxplore")
+	} else {
+		window.SetTitle(filepath.Base(c.session.File) + " - rbxplore")
+	}
+}
+
 func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) {
 	theme := ctxc.Theme()
 
@@ -339,6 +350,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 				c.session.File = exportCtx.File
 				c.session.Format = exportCtx.Format
 				c.session.Minified = exportCtx.Minified
+				c.updateWindowTitle(ctxc.Window())
 				if err := c.session.EncodeFile(); err != nil {
 					ctxc.EnterContext(&AlertContext{
 						Title:   "Error",
@@ -381,6 +393,8 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		actionSave.SetVisible(c.session != nil)
 		actionSaveAs.SetVisible(c.session != nil)
 		actionClose.SetVisible(c.session != nil)
+
+		c.updateWindowTitle(ctxc.Window())
 
 		propsAdapter.updateProps(nil)
 
