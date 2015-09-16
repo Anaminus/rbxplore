@@ -94,7 +94,7 @@ func (c *historyStack) Redo() (a Action) {
 var NoAction = errors.New("no action")
 
 type ActionController struct {
-	stack historyStack
+	stack *historyStack
 	mutex sync.Mutex
 }
 
@@ -107,8 +107,8 @@ func CreateActionController(historySize int) *ActionController {
 }
 
 func (ac *ActionController) Do(a Action) error {
-	ac.Lock()
-	defer ac.Unlock()
+	ac.mutex.Lock()
+	defer ac.mutex.Unlock()
 
 	if a == nil {
 		return NoAction
@@ -120,11 +120,12 @@ func (ac *ActionController) Do(a Action) error {
 		return err
 	}
 	ac.stack.Do(a)
+	return nil
 }
 
 func (ac *ActionController) Undo() error {
-	ac.Lock()
-	defer ac.Unlock()
+	ac.mutex.Lock()
+	defer ac.mutex.Unlock()
 
 	a := ac.stack.Undo()
 	if a == nil {
@@ -134,8 +135,8 @@ func (ac *ActionController) Undo() error {
 }
 
 func (ac *ActionController) Redo() error {
-	ac.Lock()
-	defer ac.Unlock()
+	ac.mutex.Lock()
+	defer ac.mutex.Unlock()
 
 	a := ac.stack.Redo()
 	if a == nil {
