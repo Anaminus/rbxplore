@@ -116,7 +116,7 @@ func guiMain(driver gxui.Driver) {
 					File: Option.InputFile,
 				})
 			} else if Option.New {
-				editor.ChangeSession(new(Session))
+				editor.ChangeSession(NewSession())
 			}
 		})
 	}()

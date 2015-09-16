@@ -272,7 +272,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 			return
 		}
 		if c.session == nil {
-			c.ChangeSession(&Session{})
+			c.ChangeSession(NewSession())
 			return
 		}
 		if Settings.Get("spawn_processes").(bool) {
@@ -284,7 +284,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		if c.session != nil {
 			fmt.Println("TODO: prompt to save file")
 		}
-		c.ChangeSession(&Session{})
+		c.ChangeSession(NewSession())
 	})
 	actionButton("Open", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {

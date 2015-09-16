@@ -96,6 +96,12 @@ type Session struct {
 	Root     *rbxfile.Root
 }
 
+func NewSession() *Session {
+	return &Session{
+		Root: &rbxfile.Root{},
+	}
+}
+
 // If File is defined, determines Format, and decodes the file into Root.
 func (s *Session) DecodeFile() error {
 	if s == nil {
