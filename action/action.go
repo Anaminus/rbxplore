@@ -144,3 +144,11 @@ func (ac *ActionController) Redo() error {
 	}
 	return a.Forward()
 }
+
+// Call can be used to access state synchronously without performing an
+// action.
+func (ac *ActionController) Call(f func()) {
+	ac.mutex.Lock()
+	defer ac.mutex.Unlock()
+	f()
+}
