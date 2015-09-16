@@ -147,26 +147,29 @@ func (ac *Controller) Redo() error {
 
 type Group []Action
 
-func (a *Group) Setup() error {
+func (a Group) Setup() error {
 	for _, action := range a {
 		if err := action.Setup(); err != nil {
 			return err
 		}
 	}
+	return nil
 }
 
-func (a *Group) Forward() error {
+func (a Group) Forward() error {
 	for _, action := range a {
 		if err := action.Forward(); err != nil {
 			return err
 		}
 	}
+	return nil
 }
 
-func (a *Group) Backward() error {
+func (a Group) Backward() error {
 	for _, action := range a {
 		if err := action.Backward(); err != nil {
 			return err
 		}
 	}
+	return nil
 }
