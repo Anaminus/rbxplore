@@ -93,20 +93,20 @@ func (c *historyStack) Redo() (a Action) {
 
 var NoAction = errors.New("no action")
 
-type ActionController struct {
+type Controller struct {
 	stack *historyStack
 	mutex sync.Mutex
 }
 
-func CreateActionController(historySize int) *ActionController {
-	return &ActionController{
+func CreateController(historySize int) *Controller {
+	return &Controller{
 		stack: &historyStack{
 			buffer: make([]Action, historySize),
 		},
 	}
 }
 
-func (ac *ActionController) Do(a Action) error {
+func (ac *Controller) Do(a Action) error {
 	ac.mutex.Lock()
 	defer ac.mutex.Unlock()
 
@@ -123,7 +123,7 @@ func (ac *ActionController) Do(a Action) error {
 	return nil
 }
 
-func (ac *ActionController) Undo() error {
+func (ac *Controller) Undo() error {
 	ac.mutex.Lock()
 	defer ac.mutex.Unlock()
 
@@ -134,7 +134,7 @@ func (ac *ActionController) Undo() error {
 	return a.Backward()
 }
 
-func (ac *ActionController) Redo() error {
+func (ac *Controller) Redo() error {
 	ac.mutex.Lock()
 	defer ac.mutex.Unlock()
 
@@ -147,7 +147,7 @@ func (ac *ActionController) Redo() error {
 
 // Call can be used to access state synchronously without performing an
 // action.
-func (ac *ActionController) Call(f func()) {
+func (ac *Controller) Call(f func()) {
 	ac.mutex.Lock()
 	defer ac.mutex.Unlock()
 	f()
