@@ -116,56 +116,27 @@ func (s *Session) DecodeFile() error {
 	var decode func(io.Reader, *rbxdump.API) (*rbxfile.Root, error)
 
 	// Guess format from file extension.
-	switch filepath.Ext(f.Name()) {
-	case ".rbxlx":
-		s.Format = FormatRBXLX
+	if format := FormatFromString(filepath.Ext(f.Name())[1:]); format != FormatNone {
+		s.Format = format
+	}
+	// Otherwise, use given format.
+	switch s.Format {
+	case FormatRBXL:
+		decode = bin.DeserializePlace
+	case FormatRBXM:
+		decode = bin.DeserializeModel
+	case FormatRBXLX:
 		decode = xml.Deserialize
-	case ".rbxmx":
-		s.Format = FormatRBXMX
+	case FormatRBXMX:
 		decode = xml.Deserialize
-	case ".json":
+	case FormatJSON:
 		d := json.NewDecoder(f)
 		if err := d.Decode(s.Root); err != nil {
 			return err
 		}
 		return nil
-	case ".rbxl":
-		s.Format = FormatRBXL
-		// Can be either binary or xml.
-		format, _ := rbxfile.GuessFormat(f)
-		if format == nil {
-			return rbxfile.ErrFormat
-		}
-		f.Seek(0, os.SEEK_SET)
-		decode = format.Decode
-
-	case ".rbxm":
-		s.Format = FormatRBXM
-		// Can be either binary or xml.
-		format, _ := rbxfile.GuessFormat(f)
-		if format == nil {
-			return rbxfile.ErrFormat
-		}
-		f.Seek(0, os.SEEK_SET)
-		decode = format.Decode
 	default:
-		// Guess format from content.
-		format, _ := rbxfile.GuessFormat(f)
-		if format == nil {
-			return rbxfile.ErrFormat
-		}
-		f.Seek(0, os.SEEK_SET)
-		switch format.Name() {
-		case "rbxl":
-			s.Format = FormatRBXL
-		case "rbxm":
-			s.Format = FormatRBXM
-		case "rbxlx":
-			s.Format = FormatRBXLX
-		case "rbxmx":
-			s.Format = FormatRBXMX
-		}
-		decode = format.Decode
+		return errors.New("unknown format")
 	}
 
 	s.Root, err = decode(f, API)
@@ -206,7 +177,7 @@ func (s *Session) EncodeFile() error {
 		}
 		return nil
 	default:
-		return errors.New("bad format")
+		return errors.New("unknown format")
 	}
 
 	err = encode(f, API, s.Root)

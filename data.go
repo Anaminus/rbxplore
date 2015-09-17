@@ -9,8 +9,7 @@ import (
 	"github.com/kardianos/osext"
 	"github.com/robloxapi/rbxdump"
 	"github.com/robloxapi/rbxfile"
-	_ "github.com/robloxapi/rbxfile/bin"
-	_ "github.com/robloxapi/rbxfile/xml"
+	"github.com/robloxapi/rbxfile/xml"
 	"image"
 	"image/draw"
 	"image/png"
@@ -66,7 +65,7 @@ func (d *dataStruct) OnUpdateProgress(progress func(...interface{})) *event.Conn
 func (d *dataStruct) Reload(l *DataLocations) {
 	d.reloadItem("ReflectionMetadata", l.RMDFile, RMDFileName, func(r io.ReadSeeker) error {
 		var err error
-		d.RMD, err = rbxfile.Decode(r)
+		d.RMD, err = xml.Deserialize(r, nil)
 		if err != nil {
 			d.RMD = nil
 		}
