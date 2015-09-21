@@ -269,11 +269,18 @@ func (c *FileSelectContext) Entering(ctxc *ContextController) ([]gxui.Control, b
 	}
 
 	if c.SelectedFile != "" {
-		dir := filepath.Dir(c.SelectedFile)
+		file := c.SelectedFile
+		if !filepath.IsAbs(file) {
+			var err error
+			if file, err = filepath.Abs(file); err != nil {
+				file = c.SelectedFile
+			}
+		}
+		dir := filepath.Dir(file)
 		if directories.Select(dir) {
 			directories.Show(directories.Selected())
 			updateFiles(dir)
-			fullpath.SetText(c.SelectedFile)
+			fullpath.SetText(file)
 		}
 	} else if LastFileLocation == "" {
 		if cwd, err := os.Getwd(); err == nil {
