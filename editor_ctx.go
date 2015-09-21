@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/anaminus/rbxplore/action"
 	"github.com/anaminus/rbxplore/event"
 	"log"
 	"path/filepath"
@@ -83,10 +84,13 @@ func (inst instanceNode) Create(theme gxui.Theme) gxui.Control {
 	return layout
 }
 
+////////////////
+
 type rootAdapter struct {
 	gxui.AdapterBase
 	*rbxfile.Root
 	tooltips *gxui.ToolTipController
+	ctx      *EditorContext
 }
 
 func (a rootAdapter) Size(gxui.Theme) math.Size {
@@ -97,12 +101,18 @@ func (root rootAdapter) Count() int {
 	if root.Root == nil {
 		return 0
 	}
-	return len(root.Instances)
+	return len(root.Instances) + 1
 }
 
 func (root rootAdapter) NodeAt(index int) gxui.TreeNode {
 	if root.Root == nil {
 		return nil
+	}
+	if index == len(root.Instances) {
+		return addRootNode{
+			root: root.Root,
+			ctx:  root.ctx,
+		}
 	}
 	return instanceNode{
 		Instance: root.Instances[index],
@@ -114,13 +124,20 @@ func (root rootAdapter) ItemIndex(item gxui.AdapterItem) int {
 	if root.Root == nil {
 		return -1
 	}
-	instItem := item.(*rbxfile.Instance)
-	for instItem.Parent() != nil {
-		instItem = instItem.Parent()
-	}
-	for i, inst := range root.Instances {
-		if inst == instItem {
-			return i
+	switch item := item.(type) {
+	case addRootItem:
+		if item.Root != root.Root {
+			return -1
+		}
+		return len(root.Root.Instances)
+	case *rbxfile.Instance:
+		for item.Parent() != nil {
+			item = item.Parent()
+		}
+		for i, inst := range root.Instances {
+			if inst == item {
+				return i
+			}
 		}
 	}
 	return -1
@@ -134,6 +151,124 @@ func (root rootAdapter) Create(theme gxui.Theme, index int) gxui.Control {
 	l.SetText(root.Instances[index].Name())
 	return l
 }
+
+////////////////
+
+type addRootNode struct {
+	root *rbxfile.Root
+	ctx  *EditorContext
+}
+
+type addRootItem struct {
+	*rbxfile.Root
+}
+
+func (node addRootNode) Count() int {
+	return 0
+}
+
+func (node addRootNode) NodeAt(index int) gxui.TreeNode {
+	return nil
+}
+
+func (node addRootNode) ItemIndex(item gxui.AdapterItem) int {
+	return -1
+}
+
+func (node addRootNode) Item() gxui.AdapterItem {
+	return addRootItem{Root: node.root}
+}
+
+func (node addRootNode) Create(theme gxui.Theme) gxui.Control {
+	layout := theme.CreateLinearLayout()
+	layout.SetDirection(gxui.LeftToRight)
+	layout.SetHorizontalAlignment(gxui.AlignLeft)
+	layout.SetVerticalAlignment(gxui.AlignMiddle)
+	ctx := node.ctx
+	{
+		button := CreateButton(theme, "Add Instance")
+		button.OnClick(func(gxui.MouseEvent) {
+			ctx.ctxc.EnterContext(&InstanceContext{
+				Finished: func(child *rbxfile.Instance, ok bool) {
+					if !ok {
+						return
+					}
+					if err := ctx.session.Action.Do(ctx.session.AddRootInstance(child)); err != nil {
+						ctx.ctxc.EnterContext(&AlertContext{
+							Title:   "Error",
+							Text:    "Failed to add instance:\n" + err.Error(),
+							Buttons: ButtonsOK,
+						})
+						return
+					}
+					if ctx.tree.Select(child) {
+						ctx.tree.Show(child)
+					}
+				},
+			})
+		})
+		layout.AddChild(button)
+	}
+	{
+		button := CreateButton(theme, "Add Model")
+		button.OnClick(func(gxui.MouseEvent) {
+			loadModel(ctx.ctxc, func(children []*rbxfile.Instance) {
+				ag := make(action.Group, len(children))
+				var first *rbxfile.Instance
+				for i, child := range children {
+					if first == nil {
+						first = child
+					}
+					ag[i] = ctx.session.AddRootInstance(child)
+				}
+				if err := ctx.session.Action.Do(ag); err != nil {
+					ctx.ctxc.EnterContext(&AlertContext{
+						Title:   "Error",
+						Text:    "Failed to add objects:\n" + err.Error(),
+						Buttons: ButtonsOK,
+					})
+					return
+				}
+				if first != nil && ctx.tree.Select(first) {
+					ctx.tree.Show(first)
+				}
+			})
+		})
+		layout.AddChild(button)
+	}
+	return layout
+}
+
+func loadModel(ctxc *ContextController, f func([]*rbxfile.Instance)) {
+	selectCtx := &FileSelectContext{
+		Type: FileSelect,
+	}
+	selectCtx.Finished = func() {
+		if selectCtx.SelectedFile == "" {
+			return
+		}
+		s := &Session{
+			File:   selectCtx.SelectedFile,
+			Format: FormatNone,
+		}
+		if err := s.DecodeFile(); err != nil {
+			ctxc.EnterContext(&AlertContext{
+				Title:   "Error",
+				Text:    "Failed to open file:\n" + err.Error(),
+				Buttons: ButtonsOK,
+			})
+			return
+		}
+		if len(s.Root.Instances) == 0 {
+			return
+		}
+		f(s.Root.Instances)
+	}
+	ctxc.EnterContext(selectCtx)
+
+}
+
+////////////////
 
 type propNode struct {
 	inst *rbxfile.Instance
@@ -221,6 +356,8 @@ type EditorContext struct {
 	onChangeSession gxui.Event
 	changeListener  gxui.EventSubscription
 	actionListener  *event.Connection
+	ctxc            *ContextController
+	tree            gxui.Tree
 }
 
 func (c *EditorContext) ChangeSession(s *Session) (err error) {
@@ -254,6 +391,7 @@ func (c *EditorContext) updateWindowTitle(window gxui.Window) {
 }
 
 func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool) {
+	c.ctxc = ctxc
 	theme := ctxc.Theme()
 
 	bubble := theme.CreateBubbleOverlay()
@@ -375,10 +513,11 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	})
 
 	//// Editor
-	rbxfiletree := theme.CreateTree()
-	propsAdapter := &propsAdapter{}
-	rbxfiletree.SetAdapter(&rootAdapter{
+	var updateSelection func(gxui.AdapterItem)
+	c.tree = theme.CreateTree()
+	c.tree.SetAdapter(&rootAdapter{
 		tooltips: tooltips,
+		ctx:      c,
 	})
 	if c.changeListener != nil {
 		c.changeListener.Unlisten()
@@ -402,45 +541,115 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 
 		c.updateWindowTitle(ctxc.Window())
 
-		propsAdapter.updateProps(nil)
+		if updateSelection != nil {
+			updateSelection(nil)
+		}
+		c.tree.Select(nil)
 
 		var root *rbxfile.Root
 		if c.session != nil {
 			c.actionListener = c.session.Action.OnUpdate(func(...interface{}) {
 				c.session.Action.Lock()
 				ctxc.Driver().CallSync(func() {
-					rbxfiletree.Adapter().(*rootAdapter).DataChanged(false)
+					c.tree.Adapter().(*rootAdapter).DataChanged(false)
 				})
 				c.session.Action.Unlock()
 			})
 			root = c.session.Root
 		}
-		rbxfiletree.SetAdapter(&rootAdapter{
+		c.tree.SetAdapter(&rootAdapter{
 			Root:     root,
 			tooltips: tooltips,
+			ctx:      c,
 		})
 	})
 
+	propsLayout := theme.CreateLinearLayout()
+	propsLayout.SetDirection(gxui.TopToBottom)
+	propsLayout.SetHorizontalAlignment(gxui.AlignLeft)
+	propsLayout.SetVerticalAlignment(gxui.AlignTop)
+
+	propsButtons := theme.CreateLinearLayout()
+	propsButtons.SetDirection(gxui.LeftToRight)
+	propsButtons.SetHorizontalAlignment(gxui.AlignLeft)
+	propsButtons.SetVerticalAlignment(gxui.AlignMiddle)
+	propsLayout.AddChild(propsButtons)
+
+	addChildButton := CreateButton(theme, "Add Child")
+	addChildButton.SetVisible(false)
+	addChildButton.OnClick(func(gxui.MouseEvent) {
+		inst, _ := c.tree.Selected().(*rbxfile.Instance)
+		if inst == nil {
+			return
+		}
+		ctxc.EnterContext(&InstanceContext{
+			Finished: func(child *rbxfile.Instance, ok bool) {
+				if !ok {
+					return
+				}
+				if err := c.session.Action.Do(c.session.SetParent(child, inst)); err != nil {
+					ctxc.EnterContext(&AlertContext{
+						Title:   "Error",
+						Text:    "Failed to add instance:\n" + err.Error(),
+						Buttons: ButtonsOK,
+					})
+					return
+				}
+				if c.tree.Select(child) {
+					c.tree.Show(child)
+				}
+			},
+		})
+	})
+	propsButtons.AddChild(addChildButton)
+
+	addModelButton := CreateButton(theme, "Add Model")
+	addModelButton.SetVisible(false)
+	addModelButton.OnClick(func(gxui.MouseEvent) {
+		inst, _ := c.tree.Selected().(*rbxfile.Instance)
+		if inst == nil {
+			return
+		}
+		loadModel(ctxc, func(children []*rbxfile.Instance) {
+			ag := make(action.Group, len(children))
+			for i, child := range children {
+				ag[i] = c.session.SetParent(child, inst)
+			}
+			if err := c.session.Action.Do(ag); err != nil {
+				ctxc.EnterContext(&AlertContext{
+					Title:   "Error",
+					Text:    "Failed to add objects:\n" + err.Error(),
+					Buttons: ButtonsOK,
+				})
+				return
+			}
+		})
+	})
+	propsButtons.AddChild(addModelButton)
+
+	propsAdapter := &propsAdapter{}
 	propsList := theme.CreateList()
 	propsList.SetAdapter(propsAdapter)
-
-	rbxfiletree.OnSelectionChanged(func(item gxui.AdapterItem) {
-		inst := item.(*rbxfile.Instance)
-		propsAdapter.updateProps(inst)
-	})
-
-	rbxfiletree.ExpandAll()
+	propsLayout.AddChild(propsList)
 
 	splitter := theme.CreateSplitterLayout()
 	splitter.SetOrientation(gxui.Horizontal)
-	splitter.AddChild(rbxfiletree)
-	splitter.AddChild(propsList)
+	splitter.AddChild(c.tree)
+	splitter.AddChild(propsLayout)
 
 	//// Layout
 	layout := theme.CreateLinearLayout()
 	layout.SetDirection(gxui.TopToBottom)
 	layout.AddChild(menu)
 	layout.AddChild(splitter)
+
+	updateSelection = func(item gxui.AdapterItem) {
+		inst, _ := item.(*rbxfile.Instance)
+		addChildButton.SetVisible(inst != nil)
+		addModelButton.SetVisible(inst != nil)
+		propsAdapter.updateProps(inst)
+	}
+	c.tree.OnSelectionChanged(updateSelection)
 
 	c.ChangeSession(c.session)
 
