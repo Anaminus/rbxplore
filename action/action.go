@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"github.com/anaminus/rbxplore/event"
 	"sync"
 )
 
@@ -95,7 +96,8 @@ var NoAction = errors.New("no action")
 
 type Controller struct {
 	sync.Mutex
-	stack *historyStack
+	stack    *historyStack
+	onUpdate *event.Event
 }
 
 func CreateController(historySize int) *Controller {
@@ -104,6 +106,13 @@ func CreateController(historySize int) *Controller {
 			buffer: make([]Action, historySize),
 		},
 	}
+}
+
+func (ac *Controller) OnUpdate(listener func(...interface{})) *event.Connection {
+	if ac.onUpdate == nil {
+		ac.onUpdate = new(event.Event)
+	}
+	return ac.onUpdate.Connect(listener)
 }
 
 func (ac *Controller) Do(a Action) error {
@@ -120,6 +129,7 @@ func (ac *Controller) Do(a Action) error {
 		return err
 	}
 	ac.stack.Do(a)
+	ac.onUpdate.Fire()
 	return nil
 }
 
@@ -131,7 +141,9 @@ func (ac *Controller) Undo() error {
 	if a == nil {
 		return NoAction
 	}
-	return a.Backward()
+	err := a.Backward()
+	ac.onUpdate.Fire()
+	return err
 }
 
 func (ac *Controller) Redo() error {
@@ -142,7 +154,9 @@ func (ac *Controller) Redo() error {
 	if a == nil {
 		return NoAction
 	}
-	return a.Forward()
+	err := a.Forward()
+	ac.onUpdate.Fire()
+	return err
 }
 
 type Group []Action
