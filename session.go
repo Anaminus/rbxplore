@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/anaminus/gxui"
 	"github.com/anaminus/gxui/math"
+	"github.com/anaminus/rbxplore/action"
 	"io"
 	"os"
 	"path/filepath"
@@ -94,11 +95,13 @@ type Session struct {
 	Format   Format
 	Minified bool
 	Root     *rbxfile.Root
+	Action   *action.Controller
 }
 
 func NewSession() *Session {
 	return &Session{
-		Root: &rbxfile.Root{},
+		Root:   &rbxfile.Root{},
+		Action: action.CreateController(20),
 	}
 }
 

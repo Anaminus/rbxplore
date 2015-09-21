@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/anaminus/rbxplore/event"
 	"log"
 	"path/filepath"
 	"sort"
@@ -218,6 +219,7 @@ type EditorContext struct {
 	session         *Session
 	onChangeSession gxui.Event
 	changeListener  gxui.EventSubscription
+	actionListener  *event.Connection
 }
 
 func (c *EditorContext) ChangeSession(s *Session) (err error) {
@@ -307,10 +309,9 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 				}
 				return
 			}
-			session := &Session{
-				File:   selectCtx.SelectedFile,
-				Format: FormatNone,
-			}
+			session := NewSession()
+			session.File = selectCtx.SelectedFile
+			session.Format = FormatNone
 			c.ChangeSession(session)
 		}
 		if !ctxc.EnterContext(selectCtx) {
@@ -382,6 +383,10 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		c.changeListener.Unlisten()
 	}
 	c.changeListener = c.OnChangeSession(func(err error) {
+		if c.actionListener != nil {
+			c.actionListener.Disconnect()
+			c.actionListener = nil
+		}
 		if err != nil {
 			ctxc.EnterContext(&AlertContext{
 				Title:   "Error",
@@ -400,6 +405,13 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 
 		var root *rbxfile.Root
 		if c.session != nil {
+			c.actionListener = c.session.Action.OnUpdate(func(...interface{}) {
+				c.session.Action.Lock()
+				ctxc.Driver().CallSync(func() {
+					rbxfiletree.Adapter().(*rootAdapter).DataChanged(false)
+				})
+				c.session.Action.Unlock()
+			})
 			root = c.session.Root
 		}
 		rbxfiletree.SetAdapter(&rootAdapter{

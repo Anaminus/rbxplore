@@ -72,7 +72,7 @@ func shellMain() {
 
 	Data.Reload(new(DataLocations).FromSettings(Settings))
 
-	session := new(Session)
+	session := NewSession()
 	if Option.InputFile != "" {
 		session.File = Option.InputFile
 		if err := session.DecodeFile(); err != nil {
@@ -112,9 +112,9 @@ func guiMain(driver gxui.Driver) {
 		driver.Call(func() {
 			Data.Reload(new(DataLocations).FromSettings(Settings))
 			if Option.InputFile != "" {
-				editor.ChangeSession(&Session{
-					File: Option.InputFile,
-				})
+				s := NewSession()
+				s.File = Option.InputFile
+				editor.ChangeSession(s)
 			} else if Option.New {
 				editor.ChangeSession(NewSession())
 			}
