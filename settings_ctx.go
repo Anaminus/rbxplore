@@ -52,6 +52,7 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 		table := theme.CreateTableLayout()
 		table.SetGrid(2, len(items))
 		table.SetDesiredSize(math.Size{-1, 32 * len(items)})
+		table.SetSizeClamped(true, true)
 		table.SetColumnWeight(1, 3)
 		for i, item := range items {
 			file := item.file
@@ -98,6 +99,7 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 		table := theme.CreateTableLayout()
 		table.SetGrid(2, len(items)+1)
 		table.SetDesiredSize(math.Size{-1, 32 * (len(items) + 1)})
+		table.SetSizeClamped(true, true)
 		table.SetColumnWeight(1, 3)
 		for i, item := range items {
 			url := item.url
