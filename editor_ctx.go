@@ -71,6 +71,7 @@ func (inst instanceNode) Create(theme gxui.Theme) gxui.Control {
 		texture = Data.Icons[""]
 	}
 	icon := theme.CreateImage()
+	icon.SetMargin(math.Spacing{3, 0, 0, 0})
 	icon.SetTexture(texture)
 
 	layout := theme.CreateLinearLayout()
