@@ -180,8 +180,8 @@ func (a Group) Forward() error {
 }
 
 func (a Group) Backward() error {
-	for _, action := range a {
-		if err := action.Backward(); err != nil {
+	for i := range a {
+		if err := a[len(a)-1-i].Backward(); err != nil {
 			return err
 		}
 	}
