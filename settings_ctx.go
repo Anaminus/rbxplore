@@ -49,17 +49,15 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 
 	// Files
 	{
-		left := theme.CreateLinearLayout()
-		left.SetPadding(math.Spacing{0, 0, 20, 0})
-		right := theme.CreateLinearLayout()
-		right.SetPadding(math.Spacing{20, 0, 0, 0})
-		for _, item := range items {
+		table := theme.CreateTableLayout()
+		table.SetGrid(2, len(items))
+		table.SetDesiredSize(math.Size{-1, 32 * len(items)})
+		table.SetColumnWeight(1, 3)
+		for i, item := range items {
 			file := item.file
 			label := ctxc.Theme().CreateLabel()
-			m := label.Margin()
-			label.SetMargin(math.Spacing{m.L, 8, m.R, 8})
 			label.SetText(item.name)
-			left.AddChild(label)
+			table.SetChildAt(0, i, 1, 1, label)
 
 			layout := theme.CreateLinearLayout()
 			layout.SetDirection(gxui.LeftToRight)
@@ -90,24 +88,22 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 			})
 			layout.AddChild(button)
 
-			right.AddChild(layout)
+			table.SetChildAt(1, i, 1, 1, layout)
 		}
-		layout.AddChild(group("Files", left, right))
+		layout.AddChild(group("Files", table))
 	}
 
 	// Update URLs
 	{
-		left := theme.CreateLinearLayout()
-		left.SetPadding(math.Spacing{0, 0, 20, 0})
-		right := theme.CreateLinearLayout()
-		right.SetPadding(math.Spacing{20, 0, 0, 0})
-		for _, item := range items {
+		table := theme.CreateTableLayout()
+		table.SetGrid(2, len(items)+1)
+		table.SetDesiredSize(math.Size{-1, 32 * (len(items) + 1)})
+		table.SetColumnWeight(1, 3)
+		for i, item := range items {
 			url := item.url
 			label := ctxc.Theme().CreateLabel()
-			m := label.Margin()
-			label.SetMargin(math.Spacing{m.L, 6, m.R, 6})
 			label.SetText(item.name)
-			left.AddChild(label)
+			table.SetChildAt(0, i, 1, 1, label)
 
 			layout := theme.CreateLinearLayout()
 			layout.SetDirection(gxui.LeftToRight)
@@ -122,8 +118,12 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 			})
 			layout.AddChild(textbox)
 
-			right.AddChild(layout)
+			table.SetChildAt(1, i, 1, 1, layout)
 		}
+		blayout := theme.CreateLinearLayout()
+		blayout.SetDirection(gxui.LeftToRight)
+		blayout.SetHorizontalAlignment(gxui.AlignLeft)
+		blayout.SetVerticalAlignment(gxui.AlignMiddle)
 		button := CreateButton(theme, "Update Data")
 		button.OnClick(func(gxui.MouseEvent) {
 			c.updated = true
@@ -138,9 +138,10 @@ func (c *SettingsContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 			}
 			ctxc.EnterContext(update)
 		})
-		left.AddChild(button)
+		blayout.AddChild(button)
+		table.SetChildAt(0, len(items), 1, 1, blayout)
 
-		layout.AddChild(group("Update URLs", left, right))
+		layout.AddChild(group("Update URLs", table))
 	}
 
 	actions := theme.CreateLinearLayout()
