@@ -2,7 +2,74 @@ package main
 
 import (
 	"github.com/anaminus/gxui"
+	"github.com/anaminus/gxui/math"
+	"github.com/anaminus/gxui/mixins"
+	"github.com/anaminus/gxui/mixins/base"
+	"github.com/anaminus/gxui/themes/basic"
 )
+
+type faker struct {
+	base.Control
+
+	ctxc     *ContextController
+	window   *mixins.Window
+	children gxui.Children
+}
+
+func (f *faker) Init(theme gxui.Theme) {
+	f.Control.Init(f, theme)
+}
+
+func (f *faker) DesiredSize(min, max math.Size) math.Size {
+	return f.window.Size().Clamp(min, max)
+}
+
+func (f *faker) Paint(c gxui.Canvas) {
+	s := f.window.Size().Contract(f.window.Padding()).Max(math.ZeroSize)
+	for _, child := range f.children {
+		child.Layout(child.Control.DesiredSize(math.ZeroSize, s).Rect())
+	}
+	for _, child := range f.children {
+		if child.Control.IsVisible() {
+			c.Push()
+			c.AddClip(child.Control.Size().Rect().Offset(child.Offset))
+			if cv := child.Control.Draw(); cv != nil {
+				c.DrawCanvas(cv, child.Offset)
+			}
+			c.Pop()
+		}
+	}
+	c.DrawRect(
+		math.CreateRect(0, 0, c.Size().W, c.Size().H),
+		gxui.Brush{Color: gxui.Color{0, 0, 0, 0.8}},
+	)
+}
+
+func (f *faker) Finish() {
+	f.ctxc.Window().RemoveAll()
+	for _, child := range f.children {
+		f.ctxc.Window().AddChild(child.Control)
+	}
+}
+
+func CreateFaker(ctxc *ContextController, visible bool) *faker {
+	ctxc.Driver().AssertUIGoroutine()
+	f := &faker{
+		ctxc:   ctxc,
+		window: &ctxc.Window().(*basic.Window).Window,
+	}
+	f.children = make(
+		gxui.Children,
+		len(ctxc.Window().Children()),
+	)
+	copy(f.children, ctxc.Window().Children())
+	f.Init(ctxc.Theme())
+	ctxc.Window().RemoveAll()
+	if visible {
+		// ctxc.Window().AddChild(f)
+	}
+	return f
+}
 
 type Context interface {
 	Entering(*ContextController) ([]gxui.Control, bool)
@@ -15,6 +82,7 @@ type Context interface {
 
 type contextItem struct {
 	context Context
+	faker   *faker
 	layout  gxui.LinearLayout
 	bubbles []gxui.BubbleOverlay
 }
@@ -38,11 +106,6 @@ func (c *ContextController) createContextItem(ctx Context) (ctxi contextItem, ok
 	ctxi.layout.SetDirection(ctx.Direction())
 	ctxi.layout.SetHorizontalAlignment(ctx.HorizontalAlignment())
 	ctxi.layout.SetVerticalAlignment(ctx.VerticalAlignment())
-	if ctx.IsDialog() {
-		ctxi.layout.SetBackgroundBrush(gxui.Brush{Color: gxui.Color{0, 0, 0, 0.8}})
-	} else {
-		ctxi.layout.SetBackgroundBrush(gxui.Brush{Color: gxui.Color{0, 0, 0, 1}})
-	}
 	for _, control := range controls {
 		if b, ok := control.(gxui.BubbleOverlay); ok {
 			ctxi.bubbles = append(ctxi.bubbles, b)
@@ -50,6 +113,8 @@ func (c *ContextController) createContextItem(ctx Context) (ctxi contextItem, ok
 			ctxi.layout.AddChild(control)
 		}
 	}
+
+	ctxi.faker = CreateFaker(c, ctx.IsDialog())
 
 	return ctxi, true
 }
@@ -86,12 +151,7 @@ func (c *ContextController) ExitContext() bool {
 	ctxi := c.stack[len(c.stack)-1]
 	c.stack[len(c.stack)-1] = contextItem{}
 	c.stack = c.stack[:len(c.stack)-1]
-
-	c.window.RemoveChild(ctxi.layout)
-	for _, bubble := range ctxi.bubbles {
-		c.window.RemoveChild(bubble)
-	}
-
+	ctxi.faker.Finish()
 	ctxi.context.Exiting(c)
 
 	return true
