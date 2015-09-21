@@ -1,23 +1,38 @@
 package main
 
 import (
+	"fmt"
 	"github.com/anaminus/gxui"
 	"github.com/anaminus/gxui/math"
 	"github.com/anaminus/gxui/mixins"
 	"github.com/anaminus/gxui/mixins/base"
+	"github.com/anaminus/gxui/mixins/parts"
 	"github.com/anaminus/gxui/themes/basic"
 )
 
 type faker struct {
 	base.Control
+	parts.Attachable
 
-	ctxc     *ContextController
-	window   *mixins.Window
-	children gxui.Children
+	ctxc            *ContextController
+	window          *mixins.Window
+	children        gxui.Children
+	canvas          gxui.Canvas
+	redrawRequested bool
 }
 
 func (f *faker) Init(theme gxui.Theme) {
 	f.Control.Init(f, theme)
+	f.OnAttach(func() {
+		for _, v := range f.children {
+			v.Control.Attach()
+		}
+	})
+	f.OnDetach(func() {
+		for _, v := range f.children {
+			v.Control.Detach()
+		}
+	})
 }
 
 func (f *faker) DesiredSize(min, max math.Size) math.Size {
@@ -45,29 +60,63 @@ func (f *faker) Paint(c gxui.Canvas) {
 	)
 }
 
+func (f *faker) Redraw() {
+	f.ctxc.Driver().AssertUIGoroutine()
+	if !f.redrawRequested {
+		f.redrawRequested = true
+		f.ctxc.Window().Redraw()
+	}
+}
+
+func (f *faker) Draw() gxui.Canvas {
+	if !f.Attached() {
+		panic(fmt.Errorf("Attempting to draw a non-attached control %T", f))
+	}
+
+	s := f.Size()
+	if s.Area() == 0 {
+		return nil // No area to draw in
+	}
+	if f.canvas == nil || f.canvas.Size() != s || f.redrawRequested {
+		f.canvas = f.ctxc.Driver().CreateCanvas(s)
+		f.redrawRequested = false
+		f.Paint(f.canvas)
+		f.canvas.Complete()
+	}
+	return f.canvas
+}
+
+func (f *faker) Children() gxui.Children {
+	return f.children
+}
+
 func (f *faker) Finish() {
 	f.ctxc.Window().RemoveAll()
 	for _, child := range f.children {
+		child.Control.SetParent(nil)
 		f.ctxc.Window().AddChild(child.Control)
 	}
 }
 
 func CreateFaker(ctxc *ContextController, visible bool) *faker {
 	ctxc.Driver().AssertUIGoroutine()
+	ctxc.Window().SetFocus(nil)
 	f := &faker{
 		ctxc:   ctxc,
 		window: &ctxc.Window().(*basic.Window).Window,
 	}
-	f.children = make(
-		gxui.Children,
-		len(ctxc.Window().Children()),
-	)
-	copy(f.children, ctxc.Window().Children())
 	f.Init(ctxc.Theme())
+
+	f.children = make(gxui.Children, len(ctxc.Window().Children()))
+	copy(f.children, ctxc.Window().Children())
 	ctxc.Window().RemoveAll()
-	if visible {
-		// ctxc.Window().AddChild(f)
+	for _, c := range f.children {
+		c.Control.SetParent(f)
 	}
+	if visible {
+		ctxc.Window().AddChild(f)
+	}
+
 	return f
 }
 
