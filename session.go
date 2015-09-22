@@ -329,8 +329,9 @@ func (a *actionSetParent) Setup() error {
 				return nil
 			}
 		}
+		return errors.New("instance is not a child of parent")
 	}
-	return errors.New("instance is not a child of parent")
+	return nil
 }
 
 func (a *actionSetParent) Forward() error {
