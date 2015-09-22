@@ -317,11 +317,20 @@ type actionSetParent struct {
 	instance  *rbxfile.Instance
 	newParent *rbxfile.Instance
 	oldParent *rbxfile.Instance
+	oldIndex  int
 }
 
 func (a *actionSetParent) Setup() error {
 	a.oldParent = a.instance.Parent()
-	return nil
+	if a.oldParent != nil {
+		for i, c := range a.oldParent.Children {
+			if c == a.instance {
+				a.oldIndex = i
+				return nil
+			}
+		}
+	}
+	return errors.New("instance is not a child of parent")
 }
 
 func (a *actionSetParent) Forward() error {
@@ -329,7 +338,11 @@ func (a *actionSetParent) Forward() error {
 }
 
 func (a *actionSetParent) Backward() error {
-	return a.instance.SetParent(a.oldParent)
+	if a.oldParent == nil {
+		return a.instance.SetParent(nil)
+	} else {
+		return a.oldParent.AddChildAt(a.oldIndex, a.instance)
+	}
 }
 
 ////////////////

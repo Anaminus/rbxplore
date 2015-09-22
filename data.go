@@ -153,7 +153,7 @@ func (d *dataStruct) regenerateIcons(file, fileAlt string) {
 		if inst.ClassName != "ReflectionMetadataClasses" {
 			continue
 		}
-		for _, inst := range inst.GetChildren() {
+		for _, inst := range inst.Children {
 			if inst.ClassName != "ReflectionMetadataClass" {
 				continue
 			}

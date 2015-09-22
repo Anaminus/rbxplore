@@ -19,12 +19,12 @@ type instanceNode struct {
 }
 
 func (inst instanceNode) Count() int {
-	return len(inst.GetChildren())
+	return len(inst.Children)
 }
 
 func (inst instanceNode) NodeAt(index int) gxui.TreeNode {
 	return instanceNode{
-		Instance: inst.GetChildren()[index],
+		Instance: inst.Children[index],
 		tooltips: inst.tooltips,
 	}
 }
@@ -41,7 +41,7 @@ loop:
 		}
 		instItem = instItem.Parent()
 	}
-	for i, child := range inst.GetChildren() {
+	for i, child := range inst.Children {
 		if child == instItem {
 			return i
 		}
