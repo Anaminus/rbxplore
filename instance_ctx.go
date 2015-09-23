@@ -5,11 +5,83 @@ import (
 	"github.com/anaminus/gxui/math"
 	"github.com/robloxapi/rbxdump"
 	"github.com/robloxapi/rbxfile"
+	"sort"
 )
 
 var templateInstance struct {
 	className, name string
 	service, props  bool
+}
+
+type classList struct {
+	gxui.AdapterBase
+	list []*rbxdump.Class
+	size math.Size
+}
+
+func (l classList) Len() int {
+	return len(l.list)
+}
+func (l classList) Less(i, j int) bool {
+	return l.list[i].Name < l.list[j].Name
+}
+func (l classList) Swap(i, j int) {
+	l.list[i], l.list[j] = l.list[j], l.list[i]
+}
+
+// Count returns the total number of items.
+func (l *classList) Count() int {
+	return len(l.list)
+}
+
+// ItemAt returns the AdapterItem for the item at index i. It is important
+// for the Adapter to return consistent AdapterItems for the same data, so
+// that selections can be persisted, or re-ordering animations can be played
+// when the dataset changes.
+// The AdapterItem returned must be equality-unique across all indices.
+func (l *classList) ItemAt(index int) gxui.AdapterItem {
+	return l.list[index]
+}
+
+// ItemIndex returns the index of item, or -1 if the adapter does not contain
+// item.
+func (l *classList) ItemIndex(item gxui.AdapterItem) int {
+	class, _ := item.(*rbxdump.Class)
+	if class == nil {
+		return -1
+	}
+	for i, c := range l.list {
+		if c == class {
+			return i
+		}
+	}
+	return -1
+}
+
+// Create returns a Control visualizing the item at the specified index.
+func (l *classList) Create(theme gxui.Theme, index int) gxui.Control {
+	class := l.list[index]
+	label := theme.CreateLabel()
+	label.SetText(class.Name)
+	return label
+}
+
+// Size returns the size that each of the item's controls will be displayed
+// at for the given theme.
+func (l *classList) Size(gxui.Theme) math.Size {
+	return l.size
+}
+
+func (l *classList) computeSize(theme gxui.Theme) {
+	s := math.Size{}
+	font := theme.DefaultFont()
+	for _, class := range l.list {
+		s = s.Max(font.Measure(&gxui.TextBlock{
+			Runes: []rune(class.Name),
+		}))
+	}
+	s.H = 22
+	l.size = s
 }
 
 type InstanceContext struct {
@@ -65,6 +137,53 @@ func (c *InstanceContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 			button := theme.CreateButton()
 			button.SetText("...")
 			button.SetMargin(math.Spacing{0, 3, 3, 3})
+			shown := false
+			button.OnClick(func(gxui.MouseEvent) {
+				if shown {
+					return
+				}
+				shown = true
+				if Data.API == nil {
+					return
+				}
+				classes := &classList{
+					list: make([]*rbxdump.Class, len(Data.API.Classes)),
+				}
+				i := 0
+				for _, class := range Data.API.Classes {
+					classes.list[i] = class
+					i++
+				}
+				sort.Sort(classes)
+				classes.computeSize(theme)
+				list := theme.CreateList()
+				list.SetMargin(math.Spacing{0, 0, 0, 0})
+				list.SetAdapter(classes)
+				hide := func() {
+					shown = false
+					bubble.Hide()
+					if c.className.Attached() {
+						gxui.SetFocus(c.className)
+					}
+				}
+				list.OnItemClicked(func(e gxui.MouseEvent, item gxui.AdapterItem) {
+					hide()
+					class, _ := item.(*rbxdump.Class)
+					if class != nil {
+						c.className.SetText(class.Name)
+					}
+				})
+				list.OnKeyPress(func(ev gxui.KeyboardEvent) {
+					switch ev.Key {
+					case gxui.KeyEscape:
+						hide()
+					}
+				})
+				list.OnLostFocus(hide)
+				button.OnDetach(hide)
+				bubble.Show(list, gxui.TransformCoordinate(math.Point{X: 0, Y: button.Size().H}, button, bubble))
+				gxui.SetFocus(list)
+			})
 			l = wrap(c.className, button)
 		} else {
 			l = wrap(c.className)
