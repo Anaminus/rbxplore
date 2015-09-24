@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/anaminus/rbxplore/action"
+	"github.com/anaminus/rbxplore/cmd"
 	"github.com/anaminus/rbxplore/event"
 	"github.com/robloxapi/rbxclip"
 	"log"
@@ -194,7 +195,7 @@ func (node addRootNode) Create(theme gxui.Theme) gxui.Control {
 					if !ok {
 						return
 					}
-					if err := ctx.session.Action.Do(ctx.session.AddRootInstance(child)); err != nil {
+					if err := ctx.session.Action.Do(cmd.AddRootInstance(ctx.session.Root, child)); err != nil {
 						ctx.ctxc.EnterContext(&AlertContext{
 							Title:   "Error",
 							Text:    "Failed to add instance:\n" + err.Error(),
@@ -220,7 +221,7 @@ func (node addRootNode) Create(theme gxui.Theme) gxui.Control {
 					if first == nil {
 						first = child
 					}
-					ag[i] = ctx.session.AddRootInstance(child)
+					ag[i] = cmd.AddRootInstance(ctx.session.Root, child)
 				}
 				if err := ctx.session.Action.Do(ag); err != nil {
 					ctx.ctxc.EnterContext(&AlertContext{
@@ -542,14 +543,14 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 								if first == nil {
 									first = inst
 								}
-								ag[i] = c.session.AddRootInstance(inst)
+								ag[i] = cmd.AddRootInstance(c.session.Root, inst)
 							}
 						} else {
 							for i, inst := range r.Instances {
 								if first == nil {
 									first = inst
 								}
-								ag[i] = c.session.SetParent(inst, parent)
+								ag[i] = cmd.SetParent(inst, parent)
 							}
 						}
 						if err := c.session.Action.Do(ag); err != nil {
@@ -635,7 +636,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 				if !ok {
 					return
 				}
-				if err := c.session.Action.Do(c.session.SetParent(child, inst)); err != nil {
+				if err := c.session.Action.Do(cmd.SetParent(child, inst)); err != nil {
 					ctxc.EnterContext(&AlertContext{
 						Title:   "Error",
 						Text:    "Failed to add instance:\n" + err.Error(),
@@ -661,7 +662,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		loadModel(ctxc, func(children []*rbxfile.Instance) {
 			ag := make(action.Group, len(children))
 			for i, child := range children {
-				ag[i] = c.session.SetParent(child, inst)
+				ag[i] = cmd.SetParent(child, inst)
 			}
 			if err := c.session.Action.Do(ag); err != nil {
 				ctxc.EnterContext(&AlertContext{
