@@ -355,7 +355,7 @@ type EditorContext struct {
 	session         *Session
 	onChangeSession gxui.Event
 	changeListener  gxui.EventSubscription
-	actionListener  *event.Connection
+	actionListener  event.Connection
 	ctxc            *ContextController
 	tree            gxui.Tree
 }

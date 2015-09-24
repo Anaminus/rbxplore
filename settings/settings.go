@@ -20,7 +20,7 @@ type Settings interface {
 
 	// SetHook sets up a function to be called after a setting changes. The
 	// hook receives the old and new values.
-	SetHook(name string, hook func(...interface{})) *event.Connection
+	SetHook(name string, hook func(...interface{})) event.Connection
 
 	// Load loads the settings from the file, returning whether the operation
 	// was successful.
@@ -58,7 +58,7 @@ type settingsMap struct {
 	onFileReload event.Event
 	log          *log.Logger
 	mutex        sync.Mutex
-	hooks        map[string]*event.Event
+	hooks        map[string]event.Event
 	values       map[string]interface{}
 }
 
@@ -94,7 +94,7 @@ func (s *settingsMap) SetFile(file string) {
 	s.setFile(file)
 }
 
-func (s *settingsMap) SetHook(name string, hook func(...interface{})) *event.Connection {
+func (s *settingsMap) SetHook(name string, hook func(...interface{})) event.Connection {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -103,7 +103,7 @@ func (s *settingsMap) SetHook(name string, hook func(...interface{})) *event.Con
 	}
 	ev, ok := s.hooks[name]
 	if !ok {
-		ev = new(event.Event)
+		ev = event.New(false)
 		s.hooks[name] = ev
 	}
 	return ev.Connect(hook)
@@ -269,7 +269,7 @@ func Create(defaultName string, initialValues map[string]interface{}) Settings {
 	s := &settingsMap{
 		defaultName: defaultName,
 		log:         log.New(ioutil.Discard, "", 0),
-		hooks:       make(map[string]*event.Event, len(initialValues)),
+		hooks:       make(map[string]event.Event, len(initialValues)),
 	}
 	s.setFile("")
 	s.values = make(map[string]interface{}, len(initialValues))

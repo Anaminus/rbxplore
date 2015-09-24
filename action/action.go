@@ -97,7 +97,7 @@ var NoAction = errors.New("no action")
 type Controller struct {
 	sync.Mutex
 	stack    *historyStack
-	onUpdate *event.Event
+	onUpdate event.Event
 }
 
 func CreateController(historySize int) *Controller {
@@ -108,9 +108,9 @@ func CreateController(historySize int) *Controller {
 	}
 }
 
-func (ac *Controller) OnUpdate(listener func(...interface{})) *event.Connection {
+func (ac *Controller) OnUpdate(listener func(...interface{})) event.Connection {
 	if ac.onUpdate == nil {
-		ac.onUpdate = new(event.Event)
+		ac.onUpdate = event.New(true)
 	}
 	return ac.onUpdate.Connect(listener)
 }

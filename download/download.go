@@ -31,7 +31,7 @@ type Download struct {
 	// UpdateRate limits how often OnProgress is fired while downloading.
 	UpdateRate time.Duration
 
-	onProgress *event.Event
+	onProgress event.Event
 	reader     io.ReadCloser
 	lastUpdate time.Time
 	progress   int64
@@ -52,9 +52,9 @@ type Download struct {
 // `err`: An error, if one has occurred. If the download is finished, the
 // error will be io.EOF. If the download was closed before it was finished,
 // the error will be ErrClosed.
-func (dl *Download) OnProgress(listener func(...interface{})) *event.Connection {
+func (dl *Download) OnProgress(listener func(...interface{})) event.Connection {
 	if dl.onProgress == nil {
-		dl.onProgress = new(event.Event)
+		dl.onProgress = event.New(false)
 	}
 	return dl.onProgress.Connect(listener)
 }

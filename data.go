@@ -58,7 +58,7 @@ type dataStruct struct {
 	dl     *download.Download
 }
 
-func (d *dataStruct) OnUpdateProgress(progress func(...interface{})) *event.Connection {
+func (d *dataStruct) OnUpdateProgress(progress func(...interface{})) event.Connection {
 	return d.dl.OnProgress(progress)
 }
 
