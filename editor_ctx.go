@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/anaminus/rbxplore/action"
 	"github.com/anaminus/rbxplore/event"
+	"github.com/robloxapi/rbxclip"
 	"log"
 	"path/filepath"
 	"sort"
@@ -519,6 +520,57 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		tooltips: tooltips,
 		ctx:      c,
 	})
+	c.tree.OnKeyPress(func(e gxui.KeyboardEvent) {
+		if !c.tree.HasFocus() {
+			return
+		}
+		if e.Modifier == gxui.ModControl {
+			switch e.Key {
+			case gxui.KeyC:
+				inst, _ := c.tree.Selected().(*rbxfile.Instance)
+				if inst != nil {
+					rbxclip.Set(&rbxfile.Root{Instances: []*rbxfile.Instance{inst}})
+				}
+			case gxui.KeyV:
+				if rbxclip.Has() {
+					if r := rbxclip.Get(); r != nil {
+						parent, _ := c.tree.Selected().(*rbxfile.Instance)
+						var first *rbxfile.Instance
+						ag := make(action.Group, len(r.Instances))
+						if parent == nil {
+							for i, inst := range r.Instances {
+								if first == nil {
+									first = inst
+								}
+								ag[i] = c.session.AddRootInstance(inst)
+							}
+						} else {
+							for i, inst := range r.Instances {
+								if first == nil {
+									first = inst
+								}
+								ag[i] = c.session.SetParent(inst, parent)
+							}
+						}
+						if err := c.session.Action.Do(ag); err != nil {
+							ctxc.EnterContext(&AlertContext{
+								Title:   "Error",
+								Text:    "Failed to add objects:\n" + err.Error(),
+								Buttons: ButtonsOK,
+							})
+							return
+						}
+						if first != nil {
+							c.tree.Show(first)
+						}
+					}
+				}
+			case gxui.KeyX:
+				fmt.Println("TODO: Set tree selection to clipboard and remove selection")
+			}
+		}
+	})
+
 	if c.changeListener != nil {
 		c.changeListener.Unlisten()
 	}
