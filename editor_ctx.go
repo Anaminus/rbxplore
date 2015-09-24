@@ -549,11 +549,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		var root *rbxfile.Root
 		if c.session != nil {
 			c.actionListener = c.session.Action.OnUpdate(func(...interface{}) {
-				c.session.Action.Lock()
-				ctxc.Driver().CallSync(func() {
-					c.tree.Adapter().(*rootAdapter).DataChanged(false)
-				})
-				c.session.Action.Unlock()
+				c.tree.Adapter().(*rootAdapter).DataChanged(false)
 			})
 			root = c.session.Root
 		}
