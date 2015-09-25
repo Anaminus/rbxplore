@@ -572,47 +572,6 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		}
 	})
 
-	if c.changeListener != nil {
-		c.changeListener.Unlisten()
-	}
-	c.changeListener = c.OnChangeSession(func(err error) {
-		if c.actionListener != nil {
-			c.actionListener.Disconnect()
-			c.actionListener = nil
-		}
-		if err != nil {
-			ctxc.EnterContext(&AlertContext{
-				Title:   "Error",
-				Text:    "Failed to open file: " + err.Error(),
-				Buttons: ButtonsOK,
-			})
-			return
-		}
-		actionSave.SetVisible(c.session != nil)
-		actionSaveAs.SetVisible(c.session != nil)
-		actionClose.SetVisible(c.session != nil)
-
-		c.updateWindowTitle(ctxc.Window())
-
-		if updateSelection != nil {
-			updateSelection(nil)
-		}
-		c.tree.Select(nil)
-
-		var root *rbxfile.Root
-		if c.session != nil {
-			c.actionListener = c.session.Action.OnUpdate(func(...interface{}) {
-				c.tree.Adapter().(*rootAdapter).DataChanged(false)
-			})
-			root = c.session.Root
-		}
-		c.tree.SetAdapter(&rootAdapter{
-			Root:     root,
-			tooltips: tooltips,
-			ctx:      c,
-		})
-	})
-
 	propsLayout := theme.CreateLinearLayout()
 	propsLayout.SetDirection(gxui.TopToBottom)
 	propsLayout.SetHorizontalAlignment(gxui.AlignLeft)
@@ -676,10 +635,8 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	})
 	propsButtons.AddChild(addModelButton)
 
-	propsAdapter := &propsAdapter{}
-	propsList := theme.CreateList()
-	propsList.SetAdapter(propsAdapter)
-	propsLayout.AddChild(propsList)
+	propPanel := CreatePropertyPanel(theme)
+	propsLayout.AddChild(propPanel.Control)
 
 	splitter := theme.CreateSplitterLayout()
 	splitter.SetOrientation(gxui.Horizontal)
@@ -692,11 +649,53 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	layout.AddChild(menu)
 	layout.AddChild(splitter)
 
+	if c.changeListener != nil {
+		c.changeListener.Unlisten()
+	}
+	c.changeListener = c.OnChangeSession(func(err error) {
+		if c.actionListener != nil {
+			c.actionListener.Disconnect()
+			c.actionListener = nil
+		}
+		if err != nil {
+			ctxc.EnterContext(&AlertContext{
+				Title:   "Error",
+				Text:    "Failed to open file: " + err.Error(),
+				Buttons: ButtonsOK,
+			})
+			return
+		}
+		actionSave.SetVisible(c.session != nil)
+		actionSaveAs.SetVisible(c.session != nil)
+		actionClose.SetVisible(c.session != nil)
+
+		c.updateWindowTitle(ctxc.Window())
+
+		if updateSelection != nil {
+			updateSelection(nil)
+		}
+		c.tree.Select(nil)
+
+		var root *rbxfile.Root
+		if c.session != nil {
+			c.actionListener = c.session.Action.OnUpdate(func(...interface{}) {
+				c.tree.Adapter().(*rootAdapter).DataChanged(false)
+			})
+			propPanel.SetActionController(c.session.Action)
+			root = c.session.Root
+		}
+		c.tree.SetAdapter(&rootAdapter{
+			Root:     root,
+			tooltips: tooltips,
+			ctx:      c,
+		})
+	})
+
 	updateSelection = func(item gxui.AdapterItem) {
 		inst, _ := item.(*rbxfile.Instance)
 		addChildButton.SetVisible(inst != nil)
 		addModelButton.SetVisible(inst != nil)
-		propsAdapter.updateProps(inst)
+		propPanel.SetInstance(inst)
 	}
 	c.tree.OnSelectionChanged(updateSelection)
 
