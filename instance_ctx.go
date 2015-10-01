@@ -248,7 +248,9 @@ func (c *InstanceContext) Exiting(ctxc *ContextController) {
 				class = Data.API.Classes[class.Superclass]
 			}
 		}
-		c.Instance.SetName(templateInstance.name)
+		if templateInstance.name != "" {
+			c.Instance.SetName(templateInstance.name)
+		}
 		c.Instance.IsService = templateInstance.service
 	}
 	if c.Finished != nil {
