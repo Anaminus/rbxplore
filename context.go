@@ -130,10 +130,10 @@ type Context interface {
 }
 
 type contextItem struct {
-	context Context
-	faker   *faker
-	layout  gxui.LinearLayout
-	bubbles []gxui.BubbleOverlay
+	context  Context
+	faker    *faker
+	layout   gxui.LinearLayout
+	overlays []gxui.Control
 }
 
 type ContextController struct {
@@ -156,9 +156,12 @@ func (c *ContextController) createContextItem(ctx Context) (ctxi contextItem, ok
 	ctxi.layout.SetHorizontalAlignment(ctx.HorizontalAlignment())
 	ctxi.layout.SetVerticalAlignment(ctx.VerticalAlignment())
 	for _, control := range controls {
-		if b, ok := control.(gxui.BubbleOverlay); ok {
-			ctxi.bubbles = append(ctxi.bubbles, b)
-		} else {
+		switch o := control.(type) {
+		case gxui.BubbleOverlay:
+			ctxi.overlays = append(ctxi.overlays, o)
+		case gxui.MenuOverlay:
+			ctxi.overlays = append(ctxi.overlays, o)
+		default:
 			ctxi.layout.AddChild(control)
 		}
 	}
@@ -180,7 +183,7 @@ func (c *ContextController) EnterContext(ctx Context) bool {
 
 	c.stack = append(c.stack, ctxi)
 	c.window.AddChild(ctxi.layout)
-	for _, bubble := range ctxi.bubbles {
+	for _, bubble := range ctxi.overlays {
 		c.window.AddChild(bubble)
 	}
 
@@ -231,7 +234,7 @@ func CreateContextController(driver gxui.Driver, window gxui.Window, theme gxui.
 	}
 	c.stack = append(c.stack, ctxi)
 	c.window.AddChild(ctxi.layout)
-	for _, bubble := range ctxi.bubbles {
+	for _, bubble := range ctxi.overlays {
 		c.window.AddChild(bubble)
 	}
 	return c, true
