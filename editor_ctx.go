@@ -397,82 +397,19 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	menu := theme.CreateLinearLayout()
 	menu.SetDirection(gxui.LeftToRight)
 
-	actionButton := func(name string, f func(gxui.MouseEvent)) gxui.Button {
+	actionButton := func(name string, f func()) gxui.Button {
 		button := CreateButton(theme, name)
-		button.OnClick(f)
+		button.OnClick(func(e gxui.MouseEvent) {
+			if e.Button != gxui.MouseButtonLeft {
+				return
+			}
+			ctxc.Driver().Call(f)
+		})
 		menu.AddChild(button)
 		return button
 	}
 
-	actionButton("New", func(e gxui.MouseEvent) {
-		if e.Button != gxui.MouseButtonLeft {
-			return
-		}
-		if c.session == nil {
-			c.ChangeSession(NewSession(""))
-			return
-		}
-		if Settings.Get("spawn_processes").(bool) {
-			if err := SpawnProcess("--new"); err != nil {
-				log.Printf("failed to spawn process: %s\n", err)
-			}
-			return
-		}
-		if c.session != nil {
-			fmt.Println("TODO: prompt to save file")
-		}
-		c.ChangeSession(NewSession(""))
-	})
-	actionButton("Open", func(e gxui.MouseEvent) {
-		if e.Button != gxui.MouseButtonLeft {
-			return
-		}
-		if c.session != nil {
-			fmt.Println("TODO: prompt to save file")
-		}
-		selectCtx := &FileSelectContext{
-			SelectedFile: "",
-			Type:         FileOpen,
-		}
-		selectCtx.Finished = func() {
-			if selectCtx.SelectedFile == "" {
-				return
-			}
-			if c.session != nil && Settings.Get("spawn_processes").(bool) {
-				if err := SpawnProcess(selectCtx.SelectedFile); err != nil {
-					log.Printf("failed to spawn process: %s\n", err)
-				}
-				return
-			}
-			c.ChangeSession(NewSession(selectCtx.SelectedFile))
-		}
-		if !ctxc.EnterContext(selectCtx) {
-			return
-		}
-	})
-	actionButton("Settings", func(e gxui.MouseEvent) {
-		if e.Button != gxui.MouseButtonLeft {
-			return
-		}
-		ctxc.EnterContext(&SettingsContext{})
-	})
-
-	actionSave := actionButton("Save", func(e gxui.MouseEvent) {
-		if c.session == nil {
-			return
-		}
-		if e.Button != gxui.MouseButtonLeft {
-			return
-		}
-		fmt.Println("TODO: write session to file")
-	})
-	actionSaveAs := actionButton("Save As", func(e gxui.MouseEvent) {
-		if c.session == nil {
-			return
-		}
-		if e.Button != gxui.MouseButtonLeft {
-			return
-		}
+	saveAs := func(f func()) {
 		exportCtx := &ExportContext{
 			File:     c.session.File,
 			Format:   c.session.Format,
@@ -487,22 +424,148 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 				if err := c.session.EncodeFile(); err != nil {
 					ctxc.EnterContext(&AlertContext{
 						Title:   "Error",
-						Text:    "Failed to save file: " + err.Error(),
-						Buttons: ButtonsOK,
+						Text:    "Failed to save file:\n" + err.Error(),
+						Buttons: ButtonsOKCancel,
+						Finished: func(ok, _ bool) {
+							if ok && f != nil {
+								f()
+							}
+						},
 					})
+					return
+				}
+				if f != nil {
+					f()
 				}
 			}
 		}
 		ctxc.EnterContext(exportCtx)
-	})
-	actionClose := actionButton("Close", func(e gxui.MouseEvent) {
+	}
+
+	saveOrSaveAs := func(f func()) {
 		if c.session == nil {
 			return
 		}
-		if e.Button != gxui.MouseButtonLeft {
+		if c.session.File == "" {
+			saveAs(f)
 			return
 		}
-		c.ChangeSession(nil, nil)
+		if err := c.session.EncodeFile(); err != nil {
+			ctxc.EnterContext(&AlertContext{
+				Title:   "Error",
+				Text:    "Failed to save file: " + err.Error(),
+				Buttons: ButtonsOKCancel,
+				Finished: func(ok, _ bool) {
+					if ok && f != nil {
+						f()
+					}
+				},
+			})
+			return
+		}
+		if f != nil {
+			f()
+		}
+	}
+
+	promptSaveCond := func(title string, cond bool, f func()) {
+		if !cond {
+			f()
+			return
+		}
+		var text string
+		if c.session.File == "" {
+			text = "Would you like to save?"
+		} else {
+			text = "Would you like to save " + filepath.Base(c.session.File) + "?"
+		}
+		ctxc.EnterContext(&AlertContext{
+			Title:   title,
+			Text:    text,
+			Buttons: ButtonsYesNoCancel,
+			Finished: func(ok, cancel bool) {
+				if cancel {
+					return
+				}
+				if ok {
+					saveOrSaveAs(f)
+					return
+				}
+				if f != nil {
+					f()
+				}
+			},
+		})
+	}
+
+	actionButton("New", func() {
+		if c.session == nil {
+			c.ChangeSession(NewSession(""))
+			return
+		}
+		if Settings.Get("spawn_processes").(bool) {
+			if err := SpawnProcess("--new"); err != nil {
+				log.Printf("failed to spawn process: %s\n", err)
+			}
+			return
+		}
+		promptSaveCond("New File",
+			c.session.Unsaved,
+			func() {
+				c.ChangeSession(NewSession(""))
+			},
+		)
+	})
+	actionButton("Open", func() {
+		promptSaveCond("Open File",
+			c.session != nil && c.session.Unsaved && !Settings.Get("spawn_processes").(bool),
+			func() {
+				selectCtx := &FileSelectContext{
+					SelectedFile: "",
+					Type:         FileOpen,
+				}
+				selectCtx.Finished = func() {
+					if selectCtx.SelectedFile == "" {
+						return
+					}
+					if c.session != nil && c.session.Unsaved && Settings.Get("spawn_processes").(bool) {
+						if err := SpawnProcess(selectCtx.SelectedFile); err != nil {
+							log.Printf("failed to spawn process: %s\n", err)
+						}
+						return
+					}
+					c.ChangeSession(NewSession(selectCtx.SelectedFile))
+				}
+				ctxc.EnterContext(selectCtx)
+			},
+		)
+	})
+	actionButton("Settings", func() {
+		ctxc.EnterContext(&SettingsContext{})
+	})
+
+	actionSave := actionButton("Save", func() {
+		if c.session == nil {
+			return
+		}
+		saveOrSaveAs(nil)
+	})
+	actionSaveAs := actionButton("Save As", func() {
+		if c.session == nil {
+			return
+		}
+		saveAs(nil)
+	})
+	actionClose := actionButton("Close", func() {
+		if c.session == nil {
+			return
+		}
+		promptSaveCond("Close File",
+			c.session.Unsaved,
+			func() {
+				c.ChangeSession(nil, nil)
+			},
+		)
 	})
 
 	//// Editor
