@@ -5,6 +5,7 @@ import (
 	"github.com/anaminus/rbxplore/action"
 	"github.com/anaminus/rbxplore/cmd"
 	"github.com/anaminus/rbxplore/event"
+	"github.com/anaminus/rbxplore/property"
 	"github.com/robloxapi/rbxclip"
 	"log"
 	"path/filepath"
@@ -635,8 +636,8 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	})
 	propsButtons.AddChild(addModelButton)
 
-	propPanel := CreatePropertyPanel(theme)
-	propsLayout.AddChild(propPanel.Control)
+	propPanel := property.CreatePanel(theme)
+	propsLayout.AddChild(propPanel.Control())
 
 	splitter := theme.CreateSplitterLayout()
 	splitter.SetOrientation(gxui.Horizontal)
