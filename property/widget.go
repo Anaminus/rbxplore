@@ -36,6 +36,7 @@ func createWidget(theme gxui.Theme, t rbxfile.Type) (w widget) {
 	case rbxfile.TypeProtectedString:
 	case rbxfile.TypeContent:
 	case rbxfile.TypeBool:
+		w = &widgetBool{theme: theme}
 	case rbxfile.TypeInt:
 	case rbxfile.TypeFloat:
 	case rbxfile.TypeDouble:
