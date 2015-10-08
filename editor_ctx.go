@@ -250,11 +250,8 @@ func loadModel(ctxc *ContextController, f func([]*rbxfile.Instance)) {
 		if selectCtx.SelectedFile == "" {
 			return
 		}
-		s := &Session{
-			File:   selectCtx.SelectedFile,
-			Format: FormatNone,
-		}
-		if err := s.DecodeFile(); err != nil {
+		s, err := NewSession(selectCtx.SelectedFile)
+		if err != nil {
 			ctxc.EnterContext(&AlertContext{
 				Title:   "Error",
 				Text:    "Failed to open file:\n" + err.Error(),
@@ -363,17 +360,13 @@ type EditorContext struct {
 	tree            gxui.Tree
 }
 
-func (c *EditorContext) ChangeSession(s *Session) (err error) {
-	if s != nil && s.File != "" {
-		if err = s.DecodeFile(); err != nil {
-			log.Printf("failed to decode session file: %s\n", err)
-		}
-	}
+func (c *EditorContext) ChangeSession(s *Session, err error) {
 	if err == nil {
 		c.session = s
+	} else {
+		log.Printf("failed to decode session file: %s\n", err)
 	}
 	c.onChangeSession.Fire(err)
-	return
 }
 
 func (c *EditorContext) OnChangeSession(f func(error)) gxui.EventSubscription {
@@ -416,7 +409,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 			return
 		}
 		if c.session == nil {
-			c.ChangeSession(NewSession())
+			c.ChangeSession(NewSession(""))
 			return
 		}
 		if Settings.Get("spawn_processes").(bool) {
@@ -428,7 +421,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		if c.session != nil {
 			fmt.Println("TODO: prompt to save file")
 		}
-		c.ChangeSession(NewSession())
+		c.ChangeSession(NewSession(""))
 	})
 	actionButton("Open", func(e gxui.MouseEvent) {
 		if e.Button != gxui.MouseButtonLeft {
@@ -451,10 +444,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 				}
 				return
 			}
-			session := NewSession()
-			session.File = selectCtx.SelectedFile
-			session.Format = FormatNone
-			c.ChangeSession(session)
+			c.ChangeSession(NewSession(selectCtx.SelectedFile))
 		}
 		if !ctxc.EnterContext(selectCtx) {
 			return
@@ -512,7 +502,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 		if e.Button != gxui.MouseButtonLeft {
 			return
 		}
-		c.ChangeSession(nil)
+		c.ChangeSession(nil, nil)
 	})
 
 	//// Editor
@@ -700,7 +690,7 @@ func (c *EditorContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 	}
 	c.tree.OnSelectionChanged(updateSelection)
 
-	c.ChangeSession(c.session)
+	c.ChangeSession(nil, nil)
 
 	return []gxui.Control{
 		layout,

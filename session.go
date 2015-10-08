@@ -98,18 +98,27 @@ type Session struct {
 	Action   *action.Controller
 }
 
-func NewSession() *Session {
-	return &Session{
+func NewSession(file string) (*Session, error) {
+	s := &Session{
+		File:   file,
 		Root:   &rbxfile.Root{},
 		Action: action.CreateController(20),
 	}
+	if err := s.decodeFile(); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 // If File is defined, determines Format, and decodes the file into Root.
-func (s *Session) DecodeFile() error {
-	if s == nil {
-		return errors.New("no open session")
+func (s *Session) decodeFile() error {
+	s.Action.Lock()
+	defer s.Action.Unlock()
+
+	if s.File == "" {
+		return nil
 	}
+
 	f, err := os.Open(s.File)
 	if err != nil {
 		return err
@@ -143,13 +152,13 @@ func (s *Session) DecodeFile() error {
 	}
 
 	s.Root, err = decode(f, API)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s *Session) EncodeFile() error {
+	s.Action.Lock()
+	defer s.Action.Unlock()
+
 	if s.File == "" {
 		return errors.New("no file")
 	}

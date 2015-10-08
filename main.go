@@ -72,13 +72,10 @@ func shellMain() {
 
 	Data.Reload(new(DataLocations).FromSettings(Settings))
 
-	session := NewSession()
-	if Option.InputFile != "" {
-		session.File = Option.InputFile
-		if err := session.DecodeFile(); err != nil {
-			fmt.Fprintf(os.Stderr, "could not decode input file: ", err)
-			return
-		}
+	session, err := NewSession(Option.InputFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could not decode input file: ", err)
+		return
 	}
 
 	if Option.OutputFormat != "" {
@@ -112,11 +109,9 @@ func guiMain(driver gxui.Driver) {
 		driver.Call(func() {
 			Data.Reload(new(DataLocations).FromSettings(Settings))
 			if Option.InputFile != "" {
-				s := NewSession()
-				s.File = Option.InputFile
-				editor.ChangeSession(s)
+				editor.ChangeSession(NewSession(Option.InputFile))
 			} else if Option.New {
-				editor.ChangeSession(NewSession())
+				editor.ChangeSession(NewSession(""))
 			}
 		})
 	}()
