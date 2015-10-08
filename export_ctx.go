@@ -31,7 +31,7 @@ func (c *ExportContext) Entering(ctxc *ContextController) ([]gxui.Control, bool)
 				Title:   "Confirm Overwrite",
 				Text:    filepath.Base(c.File) + " already exists.\nWould you like to replace it?",
 				Buttons: ButtonsYesNo,
-				Finished: func(ok bool) {
+				Finished: func(ok, cancel bool) {
 					if ok {
 						c.ok = true
 						ctxc.ExitContext()
