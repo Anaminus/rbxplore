@@ -96,6 +96,7 @@ type Session struct {
 	Minified bool
 	Root     *rbxfile.Root
 	Action   *action.Controller
+	Unsaved  bool
 }
 
 func NewSession(file string) (*Session, error) {
@@ -104,6 +105,9 @@ func NewSession(file string) (*Session, error) {
 		Root:   &rbxfile.Root{},
 		Action: action.CreateController(20),
 	}
+	s.Action.OnUpdate(func(...interface{}) {
+		s.Unsaved = true
+	})
 	if err := s.decodeFile(); err != nil {
 		return nil, err
 	}
@@ -196,5 +200,6 @@ func (s *Session) EncodeFile() error {
 	if err != nil {
 		return err
 	}
+	s.Unsaved = false
 	return nil
 }
