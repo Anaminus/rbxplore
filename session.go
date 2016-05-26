@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/robloxapi/rbxdump"
+	"github.com/robloxapi/rbxapi"
 	"github.com/robloxapi/rbxfile"
 	"github.com/robloxapi/rbxfile/bin"
 	"github.com/robloxapi/rbxfile/xml"
@@ -129,7 +129,7 @@ func (s *Session) decodeFile() error {
 	}
 	defer f.Close()
 
-	var decode func(io.Reader, *rbxdump.API) (*rbxfile.Root, error)
+	var decode func(io.Reader, *rbxapi.API) (*rbxfile.Root, error)
 
 	// Guess format from file extension.
 	if format := FormatFromString(filepath.Ext(f.Name())[1:]); format != FormatNone {
@@ -176,7 +176,7 @@ func (s *Session) EncodeFile() error {
 	}
 	defer f.Close()
 
-	var encode func(io.Writer, *rbxdump.API, *rbxfile.Root) error
+	var encode func(io.Writer, *rbxapi.API, *rbxfile.Root) error
 	switch s.Format {
 	case FormatRBXL:
 		encode = bin.SerializePlace

@@ -5,7 +5,7 @@ import (
 	"github.com/anaminus/gxui/math"
 	"github.com/anaminus/rbxplore/action"
 	"github.com/anaminus/rbxplore/cmd"
-	"github.com/robloxapi/rbxdump"
+	"github.com/robloxapi/rbxapi"
 	"github.com/robloxapi/rbxfile"
 	"sort"
 )
@@ -13,7 +13,7 @@ import (
 type Panel interface {
 	Control() gxui.Control
 	SetActionController(ac *action.Controller)
-	SetAPI(api *rbxdump.API)
+	SetAPI(api *rbxapi.API)
 	SetInstance(inst *rbxfile.Instance)
 	SetProperty(prop string, value rbxfile.Value)
 }
@@ -23,7 +23,7 @@ type panel struct {
 	table      gxui.TableLayout
 	theme      gxui.Theme
 	ac         *action.Controller
-	api        *rbxdump.API
+	api        *rbxapi.API
 	itemHeight int
 	divider    float64
 	instance   *rbxfile.Instance
@@ -123,7 +123,7 @@ func (p *panel) SetActionController(ac *action.Controller) {
 	}
 }
 
-func (p *panel) SetAPI(api *rbxdump.API) {
+func (p *panel) SetAPI(api *rbxapi.API) {
 	if api != p.api {
 		p.api = api
 		p.relayout()

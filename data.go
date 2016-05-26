@@ -7,7 +7,8 @@ import (
 	"github.com/anaminus/rbxplore/event"
 	"github.com/anaminus/rbxplore/settings"
 	"github.com/kardianos/osext"
-	"github.com/robloxapi/rbxdump"
+	"github.com/robloxapi/rbxapi"
+	"github.com/robloxapi/rbxapi/dump"
 	"github.com/robloxapi/rbxfile"
 	"github.com/robloxapi/rbxfile/xml"
 	"image"
@@ -52,7 +53,7 @@ func (d *DataLocations) FromSettings(s settings.Settings) *DataLocations {
 
 type dataStruct struct {
 	RMD    *rbxfile.Root
-	API    *rbxdump.API
+	API    *rbxapi.API
 	Icons  map[string]gxui.Texture
 	driver gxui.Driver
 	dl     *download.Download
@@ -73,7 +74,7 @@ func (d *dataStruct) Reload(l *DataLocations) {
 	})
 	d.reloadItem("API", l.APIFile, APIFileName, func(r io.ReadSeeker) error {
 		var err error
-		d.API, err = rbxdump.Decode(r)
+		d.API, err = dump.Decode(r)
 		if err != nil {
 			d.API = nil
 		}

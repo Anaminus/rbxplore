@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/robloxapi/rbxdump"
+	"github.com/robloxapi/rbxapi"
 )
 
-var API *rbxdump.API
+var API *rbxapi.API
 
 func GenerateAPI() {
 

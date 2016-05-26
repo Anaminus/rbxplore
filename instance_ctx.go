@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/anaminus/gxui"
 	"github.com/anaminus/gxui/math"
-	"github.com/robloxapi/rbxdump"
+	"github.com/robloxapi/rbxapi"
 	"github.com/robloxapi/rbxfile"
 	"sort"
 )
@@ -15,7 +15,7 @@ var templateInstance struct {
 
 type classList struct {
 	gxui.AdapterBase
-	list []*rbxdump.Class
+	list []*rbxapi.Class
 	size math.Size
 }
 
@@ -46,7 +46,7 @@ func (l *classList) ItemAt(index int) gxui.AdapterItem {
 // ItemIndex returns the index of item, or -1 if the adapter does not contain
 // item.
 func (l *classList) ItemIndex(item gxui.AdapterItem) int {
-	class, _ := item.(*rbxdump.Class)
+	class, _ := item.(*rbxapi.Class)
 	if class == nil {
 		return -1
 	}
@@ -147,7 +147,7 @@ func (c *InstanceContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 					return
 				}
 				classes := &classList{
-					list: make([]*rbxdump.Class, len(Data.API.Classes)),
+					list: make([]*rbxapi.Class, len(Data.API.Classes)),
 				}
 				i := 0
 				for _, class := range Data.API.Classes {
@@ -168,7 +168,7 @@ func (c *InstanceContext) Entering(ctxc *ContextController) ([]gxui.Control, boo
 				}
 				list.OnItemClicked(func(e gxui.MouseEvent, item gxui.AdapterItem) {
 					hide()
-					class, _ := item.(*rbxdump.Class)
+					class, _ := item.(*rbxapi.Class)
 					if class != nil {
 						c.className.SetText(class.Name)
 					}
@@ -230,18 +230,18 @@ func (c *InstanceContext) Exiting(ctxc *ContextController) {
 			class := Data.API.Classes[c.Instance.ClassName]
 			for class != nil {
 				for _, member := range class.Members {
-					if prop, ok := member.(*rbxdump.Property); ok {
-						if prop.ReadOnly || prop.Deprecated || prop.Hidden {
+					if prop, ok := member.(*rbxapi.Property); ok {
+						if prop.Tag("readonly") || prop.Tag("deprecated") || prop.Tag("hidden") {
 							continue
 						}
-						switch prop.Name {
+						switch prop.MemberName {
 						case "Parent", "ClassName", "Archivable":
 							continue
 						}
 						if enum := Data.API.Enums[prop.ValueType]; enum != nil {
-							c.Instance.Set(prop.Name, rbxfile.NewValue(rbxfile.TypeToken))
+							c.Instance.Set(prop.MemberName, rbxfile.NewValue(rbxfile.TypeToken))
 						} else {
-							c.Instance.Set(prop.Name, rbxfile.NewValue(rbxfile.TypeFromString(prop.ValueType)))
+							c.Instance.Set(prop.MemberName, rbxfile.NewValue(rbxfile.TypeFromString(prop.ValueType)))
 						}
 					}
 				}
