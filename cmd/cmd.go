@@ -103,13 +103,12 @@ func SetReference(inst *rbxfile.Instance, ref []byte) action.Action {
 
 type actionSetReference struct {
 	instance *rbxfile.Instance
-	newRef   []byte
-	oldRef   []byte
+	newRef   string
+	oldRef   string
 }
 
 func (a *actionSetReference) Setup() error {
-	a.oldRef = make([]byte, len(a.instance.Reference))
-	copy(a.oldRef, a.instance.Reference)
+	a.oldRef = a.instance.Reference
 	return nil
 }
 
